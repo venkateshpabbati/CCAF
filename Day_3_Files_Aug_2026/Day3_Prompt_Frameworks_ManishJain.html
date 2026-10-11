@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Framework Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1218;
+    --surface:#171B23;
+    --surface-2:#1E232D;
+    --border:#2A303B;
+    --text:#E8EAF0;
+    --text-muted:#8891A3;
+    --accent:#FFB454;
+    --accent-soft:rgba(255,180,84,0.14);
+    --teal:#35C7C1;
+    --teal-soft:rgba(53,199,193,0.14);
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1100px 600px at 8% -10%, rgba(255,180,84,0.07), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(53,199,193,0.08), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.55;
+    min-height:100vh;
+  }
+  code, .mono, .pipeline-node, .chip, .tag, select, input, textarea, button{
+    font-family:'IBM Plex Mono', monospace;
+  }
+  a{color:var(--teal);}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* HERO */
+  .hero{
+    border:1px solid var(--border);
+    background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+    border-radius:14px;
+    padding:36px 32px;
+    margin-bottom:28px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"SPEC://PROMPT-ENGINEERING";
+    position:absolute; top:14px; right:20px;
+    font-size:10px; letter-spacing:0.14em; color:var(--text-muted);
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--accent); border:1px solid rgba(255,180,84,0.35);
+    background:var(--accent-soft); padding:4px 10px; border-radius:20px;
+    margin-bottom:16px;
+  }
+  .eyebrow::before{content:"●"; font-size:8px;}
+  h1{
+    font-size:clamp(28px,4vw,40px);
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+    font-weight:700;
+  }
+  .hero p{color:var(--text-muted); max-width:640px; margin:0; font-size:15px;}
+
+  /* TABS */
+  .tabbar{
+    display:flex; flex-wrap:wrap; gap:6px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:26px;
+    position:sticky; top:0; z-index:20;
+    background:rgba(15,18,24,0.92);
+    backdrop-filter:blur(6px);
+    padding:10px 0;
+  }
+  .tab-btn{
+    background:transparent; border:1px solid transparent; color:var(--text-muted);
+    padding:8px 14px; border-radius:8px; cursor:pointer;
+    font-size:13px; font-weight:500; letter-spacing:0.02em;
+    transition:all .15s ease;
+  }
+  .tab-btn:hover{color:var(--text); background:var(--surface-2);}
+  .tab-btn.active{
+    color:var(--bg); background:var(--accent); border-color:var(--accent);
+    font-weight:600;
+  }
+  .panel{display:none; animation:fade .25s ease;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  h2.section-title{
+    font-size:20px; margin:0 0 6px; font-weight:700;
+  }
+  .section-sub{color:var(--text-muted); font-size:14px; margin:0 0 22px;}
+
+  /* OVERVIEW TABLE */
+  table.overview{
+    width:100%; border-collapse:collapse;
+    border:1px solid var(--border); border-radius:10px; overflow:hidden;
+    font-size:13.5px;
+  }
+  table.overview th, table.overview td{
+    padding:11px 14px; text-align:left; border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  table.overview th{
+    background:var(--surface-2); color:var(--text-muted);
+    font-size:11px; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;
+  }
+  table.overview tr:last-child td{border-bottom:none;}
+  table.overview tbody tr:hover{background:var(--surface-2);}
+  .code-chip{
+    display:inline-block; font-weight:700; color:var(--accent);
+    background:var(--accent-soft); border:1px solid rgba(255,180,84,0.3);
+    padding:2px 8px; border-radius:6px; font-size:12.5px;
+  }
+  .cat-pill{
+    display:inline-block; font-size:10.5px; padding:2px 8px; border-radius:20px;
+    border:1px solid var(--border); color:var(--text-muted); white-space:nowrap;
+  }
+
+  /* FRAMEWORK CARD */
+  .fw-card{
+    border:1px solid var(--border); background:var(--surface);
+    border-radius:12px; padding:22px 22px 20px; margin-bottom:20px;
+  }
+  .fw-head{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+  .fw-head h3{margin:0; font-size:18px; font-weight:700;}
+  .fw-bestfor{color:var(--text-muted); font-size:12.5px; margin:0 0 16px;}
+
+  .pipeline{display:flex; flex-wrap:wrap; align-items:center; gap:0; margin:14px 0 18px;}
+  .pipeline-node{
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 12px; font-size:11.5px; color:var(--teal);
+    letter-spacing:0.02em; white-space:nowrap;
+  }
+  .pipeline-arrow{color:var(--text-muted); padding:0 8px; font-size:14px;}
+
+  .example-domain{
+    border-top:1px dashed var(--border); padding-top:12px; margin-top:12px;
+  }
+  .example-domain h4{
+    margin:0 0 8px; font-size:12.5px; color:var(--accent); text-transform:uppercase; letter-spacing:0.06em;
+  }
+  .example-domain dl{margin:0; display:grid; grid-template-columns:130px 1fr; row-gap:6px; column-gap:10px; font-size:13.5px;}
+  .example-domain dt{color:var(--text-muted); font-weight:600;}
+  .example-domain dd{margin:0;}
+
+  /* BUILD YOUR OWN */
+  .guide-steps{display:grid; gap:12px; margin-bottom:26px;}
+  .guide-step{
+    display:flex; gap:12px; border:1px solid var(--border); background:var(--surface);
+    border-radius:10px; padding:14px 16px;
+  }
+  .guide-step .num{
+    font-family:'IBM Plex Mono',monospace; color:var(--accent); font-weight:700; font-size:13px; flex-shrink:0;
+  }
+  .guide-step h4{margin:0 0 4px; font-size:14px;}
+  .guide-step p{margin:0; color:var(--text-muted); font-size:13px;}
+
+  .builder-box{
+    border:1px solid var(--border); background:var(--surface); border-radius:12px; padding:22px;
+  }
+  .stage-row{display:flex; gap:8px; margin-bottom:8px; align-items:center;}
+  .stage-row input{flex:1; }
+  .stage-row .stage-name{flex:0 0 160px;}
+  input, textarea, select{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:7px; padding:8px 10px; font-size:13px; font-family:'IBM Plex Sans',sans-serif;
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  textarea{width:100%; resize:vertical; min-height:60px;}
+  button.btn{
+    background:var(--accent); color:#171200; border:none; border-radius:8px;
+    padding:9px 16px; font-weight:700; font-size:13px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif;
+    transition:transform .1s ease;
+  }
+  button.btn:hover{transform:translateY(-1px);}
+  button.btn.secondary{background:transparent; color:var(--teal); border:1px solid var(--teal);}
+  button.btn.ghost{background:transparent; color:var(--text-muted); border:1px solid var(--border);}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+  .acronym-preview{
+    font-size:26px; font-weight:700; letter-spacing:0.08em; color:var(--accent);
+    margin:18px 0 4px;
+  }
+  pre.output{
+    background:#0B0D12; border:1px solid var(--border); border-radius:10px;
+    padding:16px; font-size:13px; white-space:pre-wrap; word-break:break-word;
+    max-height:340px; overflow:auto; margin-top:14px;
+  }
+
+  /* SIMULATOR */
+  .sim-grid{display:grid; grid-template-columns:1fr; gap:20px;}
+  @media(min-width:820px){.sim-grid{grid-template-columns:1fr 1fr;}}
+  .sim-col{border:1px solid var(--border); background:var(--surface); border-radius:12px; padding:20px;}
+  .sim-col h3{margin:0 0 14px; font-size:15px;}
+  .field-label{font-size:12px; color:var(--teal); margin:12px 0 5px; display:block; font-weight:600;}
+  .copy-msg{color:var(--teal); font-size:12px; margin-left:8px;}
+
+  footer{
+    text-align:center; color:var(--text-muted); font-size:12px; margin-top:40px;
+    padding-top:20px; border-top:1px solid var(--border);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .panel{animation:none;}
+    button.btn:hover{transform:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Prompt Engineering Toolkit</span>
+    <h1>15 Practical AI Prompt Frameworks</h1>
+    <p>A working reference for structuring prompts across development, infrastructure and business use cases — browse the library, study real examples, design your own framework, or simulate one live.</p>
+  </div>
+
+  <div class="tabbar" id="tabbar"></div>
+
+  <div id="panels"></div>
+
+  <footer>Prompt Framework Blueprint — build one, test one, ship one.</footer>
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   DATA
+--------------------------------------------------------- */
+const CATEGORIES = {
+  basic:      { label: "Basic Prompting",        desc: "Foundational frameworks for everyday, general-purpose prompts." },
+  business:   { label: "Business Prompting",      desc: "Frameworks tuned for planning, management and operational asks." },
+  technical:  { label: "Technical Prompting",     desc: "Frameworks built for engineering, infra and AI workflow tasks." },
+  advanced:   { label: "Advanced Enterprise",     desc: "Multi-step frameworks for complex, high-stakes enterprise prompts." },
+  new:        { label: "Extended Library",        desc: "Additional widely-used frameworks worth adding to the toolkit." }
+};
+
+const FRAMEWORKS = [
+  { code:"STAR", name:"Situation → Task → Action → Result", category:"basic", bestFor:"General business tasks",
+    stages:["Situation","Task","Action","Result"],
+    examples:[
+      { domain:"Developer", values:["Our Python API is responding slowly.","Identify the likely performance bottlenecks.","Analyze the provided code and suggest optimization techniques.","Provide optimized code and explain the expected performance improvement."] },
+      { domain:"Infrastructure", values:["Our Azure VM is experiencing high CPU utilization.","Identify the possible causes.","Provide commands and monitoring steps to diagnose the issue.","Create a troubleshooting plan with remediation steps."] },
+      { domain:"Sales", values:["A B2B customer is considering a competitor.","Prepare a customer retention strategy.","Identify customer concerns, value gaps and possible offers.","Provide a practical 30-day retention plan."] }
+    ]},
+  { code:"ROLE", name:"Role → Objective → Limitations → Expected Output", category:"basic", bestFor:"AI role-based prompting",
+    stages:["Role","Objective","Limitations","Expected Output"],
+    examples:[
+      { domain:"Developer", values:["Act as a senior Python developer.","Refactor this application.","Do not change the existing API interfaces.","Provide optimized code with explanations."] },
+      { domain:"Infrastructure", values:["Act as an Azure cloud architect.","Design a highly available application architecture.","Use Azure PaaS services and minimize cost.","Provide architecture, services and deployment approach."] },
+      { domain:"Sales", values:["Act as a B2B sales strategist.","Improve conversion rates.","No discount above 5%.","Provide a customer engagement strategy."] }
+    ]},
+  { code:"PACT", name:"Purpose → Audience → Context → Task", category:"basic", bestFor:"Business communication",
+    stages:["Purpose","Audience","Context","Task"],
+    examples:[
+      { domain:"Developer", values:["Improve code quality.","Development team.","Large Python application with technical debt.","Create a code-review checklist."] },
+      { domain:"Infrastructure", values:["Improve cloud security.","Infrastructure team.","AWS production environment.","Create a security assessment checklist."] },
+      { domain:"Operations", values:["Reduce operational delays.","Operations managers.","Multiple approval processes are causing delays.","Identify bottlenecks and propose improvements."] }
+    ]},
+  { code:"CLEAR", name:"Context → Level → Expectations → Action → Result", category:"business", bestFor:"Business and management",
+    stages:["Context","Level","Expectations","Action","Result"],
+    examples:[
+      { domain:"Developer", values:["We have a Java Spring Boot application.","Intermediate developer.","Follow clean-code practices.","Review the authentication module.","Provide issues, recommendations and corrected code."] },
+      { domain:"Infrastructure", values:["Production Kubernetes cluster.","Senior DevOps engineer.","Avoid application downtime.","Diagnose a failed deployment.","Provide a safe troubleshooting and rollback procedure."] },
+      { domain:"HR", values:["Employee attrition has increased.","HR management.","Use practical, data-driven recommendations.","Analyze possible causes.","Provide an employee-retention action plan."] }
+    ]},
+  { code:"SMART", name:"Specific → Measurable → Achievable → Relevant → Time-bound", category:"business", bestFor:"Planning and objectives",
+    stages:["Specific","Measurable","Achievable","Relevant","Time-bound"],
+    examples:[
+      { domain:"Developer", values:["Reduce API response time.","From 2 seconds to below 500 ms.","Optimize database queries and caching.","Improve application performance.","Complete within two weeks."] },
+      { domain:"Infrastructure", values:["Reduce cloud infrastructure cost.","Reduce monthly cost by 20%.","Rightsize unused resources.","Improve cloud efficiency.","Complete within 30 days."] },
+      { domain:"HR", values:["Improve employee onboarding.","Reduce onboarding completion time by 30%.","Automate documentation and approvals.","Improve employee experience.","Implement within 60 days."] }
+    ]},
+  { code:"COST", name:"Context → Objective → Steps → Target Output", category:"business", bestFor:"Operational workflows",
+    stages:["Context","Objective","Steps","Target Output"],
+    examples:[
+      { domain:"Developer", values:["Legacy application.","Modernize the application.","Analyze code, identify dependencies, propose architecture and migration steps.","Provide a phased modernization roadmap."] },
+      { domain:"Infrastructure", values:["On-premise infrastructure.","Migrate workloads to Azure.","Assess, classify, migrate and validate workloads.","Provide a migration roadmap."] },
+      { domain:"Operations", values:["Manual invoice-processing workflow.","Automate the process.","Identify manual activities, automation opportunities and approval points.","Provide an automation workflow."] }
+    ]},
+  { code:"RACE", name:"Role → Action → Context → Expected Output", category:"technical", bestFor:"Technical and business tasks",
+    stages:["Role","Action","Context","Expected Output"],
+    examples:[
+      { domain:"Developer", values:["Senior software engineer.","Review the code.","The application has frequent memory issues.","Identify memory leaks and provide corrected code."] },
+      { domain:"Infrastructure", values:["Kubernetes administrator.","Troubleshoot the cluster.","Pods are repeatedly restarting.","Provide diagnostic commands, possible causes and fixes."] },
+      { domain:"Finance", values:["Financial analyst.","Analyze the expense data.","Operating costs increased by 15%.","Identify major cost drivers and recommend actions."] }
+    ]},
+  { code:"DRIVE", name:"Define → Requirements → Inputs → Validate → Execute", category:"technical", bestFor:"Technical/AI workflows",
+    stages:["Define","Requirements","Inputs","Validate","Execute"],
+    examples:[
+      { domain:"Developer", values:["Build a customer-management API.","CRUD, authentication and logging.","Existing database schema.","Check security and API standards.","Generate the API implementation."] },
+      { domain:"Infrastructure", values:["Improve Kubernetes reliability.","High availability and monitoring.","Existing cluster configuration.","Check resource utilization and failure scenarios.","Provide configuration improvements."] },
+      { domain:"Sales", values:["Improve lead conversion.","Segment leads and prioritize high-value prospects.","CRM lead data.","Check lead quality and conversion history.","Create a lead-prioritization model."] }
+    ]},
+  { code:"TRACE", name:"Task → Role → Requirements → Approach → Constraints → Evaluation", category:"advanced", bestFor:"Complex tasks",
+    stages:["Task","Role","Requirements","Approach","Constraints","Evaluation"],
+    examples:[
+      { domain:"Developer", values:["Design a REST API.","Senior backend architect.","Authentication, logging and error handling.","Use Python FastAPI.","Follow REST principles.","Include security, scalability and maintainability criteria."] },
+      { domain:"Infrastructure", values:["Design a disaster-recovery architecture.","Cloud architect.","RTO under 1 hour.","Use Azure services.","Control infrastructure cost.","Evaluate availability, recovery time and cost."] },
+      { domain:"HR", values:["Create an employee engagement program.","HR business partner.","Include surveys, manager actions and measurement.","Use a quarterly program.","Limited budget.","Measure participation and employee satisfaction."] }
+    ]},
+  { code:"FOCUS", name:"Function → Objective → Context → User → Success Criteria", category:"advanced", bestFor:"Enterprise AI use cases",
+    stages:["Function","Objective","Context","User","Success Criteria"],
+    examples:[
+      { domain:"Developer", values:["Code-review assistant.","Identify bugs and security issues.","Enterprise Java application.","Senior developers.","Accurate findings with actionable recommendations."] },
+      { domain:"Infrastructure", values:["Cloud-monitoring assistant.","Detect infrastructure problems.","Azure production environment.","DevOps engineers.","Identify root cause and recommend safe remediation."] },
+      { domain:"HR", values:["HR policy assistant.","Help employees understand company policies.","Enterprise HR environment.","Employees and HR teams.","Give accurate policy-based answers and identify when HR escalation is required."] }
+    ]},
+  { code:"CO-STAR", name:"Context → Objective → Style → Tone → Audience → Response Format", category:"new", bestFor:"Content and copywriting prompts",
+    stages:["Context","Objective","Style","Tone","Audience","Response Format"],
+    examples:[
+      { domain:"Developer", values:["Writing API documentation for a new Python SDK.","Explain how to authenticate and make the first request.","Clear, example-driven technical writing.","Friendly but precise.","Developers integrating the SDK for the first time.","Markdown with headed sections and code blocks."] },
+      { domain:"Marketing", values:["Launching a productivity app to a Gen Z audience.","Drive app-store installs.","Punchy, informal, trend-aware.","Energetic and witty.","18-24 year olds active on short-form video.","Three short social captions with hashtags."] }
+    ]},
+  { code:"RTF", name:"Role → Task → Format", category:"new", bestFor:"Fast, structured everyday prompts",
+    stages:["Role","Task","Format"],
+    examples:[
+      { domain:"Developer", values:["Act as a Python code reviewer.","Check this function for edge cases and style issues.","Bullet list of issues, ranked by severity."] },
+      { domain:"General", values:["Act as a travel planner.","Suggest a 3-day itinerary for Kyoto.","Day-by-day table."] }
+    ]},
+  { code:"APE", name:"Action → Purpose → Expectation", category:"new", bestFor:"Quick single-shot task prompts",
+    stages:["Action","Purpose","Expectation"],
+    examples:[
+      { domain:"Developer", values:["Write unit tests for this Python function.","Ensure edge cases like empty input and negative numbers are covered.","A pytest file with at least 5 test cases."] },
+      { domain:"General", values:["Summarize this quarterly report.","Help leadership skim it before a meeting.","A five-bullet executive summary."] }
+    ]},
+  { code:"RISEN", name:"Role → Instructions → Steps → End Goal → Narrowing", category:"new", bestFor:"Detailed, guided multi-step tasks",
+    stages:["Role","Instructions","Steps","End Goal","Narrowing"],
+    examples:[
+      { domain:"Developer", values:["Senior Python mentor.","Teach the user how to profile a slow function.","Explain cProfile, identify hotspots, suggest fixes.","The user can independently profile and optimize their own code.","Keep examples in Python 3.11+, no external profilers."] },
+      { domain:"Education", values:["High-school chemistry tutor.","Explain how to balance chemical equations.","Show the method, then two worked examples.","Student can balance equations unassisted.","Use only reactions from the grade-10 syllabus."] }
+    ]},
+  { code:"CRISPE", name:"Capacity/Role → Insight → Statement → Personality → Experiment", category:"new", bestFor:"Creative and persona-driven prompts",
+    stages:["Capacity/Role","Insight","Statement","Personality","Experiment"],
+    examples:[
+      { domain:"Developer", values:["Act as a witty senior engineer writing commit messages.","The team's commit history is dry and inconsistent.","Rewrite the last 5 commit messages.","Dry humor, still professional.","Give 2 tone variations to choose from."] },
+      { domain:"Content", values:["Act as a brand storyteller for a coffee startup.","The brand wants to feel artisanal, not corporate.","Write an About Us page.","Warm, sensory, understated.","Provide a short and a long version."] }
+    ]}
+];
+
+/* ---------------------------------------------------------
+   TAB SETUP
+--------------------------------------------------------- */
+const TABS = [
+  { id:"overview",  label:"Overview" },
+  { id:"basic",     label:"Basic" },
+  { id:"business",  label:"Business" },
+  { id:"technical", label:"Technical" },
+  { id:"advanced",  label:"Advanced" },
+  { id:"new",       label:"Extended Library" },
+  { id:"build",     label:"Build Your Own" },
+  { id:"simulator", label:"Simulator" }
+];
+
+const tabbar = document.getElementById("tabbar");
+const panelsRoot = document.getElementById("panels");
+
+TABS.forEach((t,i)=>{
+  const btn = document.createElement("button");
+  btn.className = "tab-btn" + (i===0 ? " active" : "");
+  btn.textContent = t.label;
+  btn.dataset.tab = t.id;
+  btn.addEventListener("click", ()=> switchTab(t.id));
+  tabbar.appendChild(btn);
+
+  const panel = document.createElement("div");
+  panel.className = "panel" + (i===0 ? " active" : "");
+  panel.id = "panel-"+t.id;
+  panelsRoot.appendChild(panel);
+});
+
+function switchTab(id){
+  document.querySelectorAll(".tab-btn").forEach(b=> b.classList.toggle("active", b.dataset.tab===id));
+  document.querySelectorAll(".panel").forEach(p=> p.classList.toggle("active", p.id === "panel-"+id));
+}
+
+/* ---------------------------------------------------------
+   RENDER HELPERS
+--------------------------------------------------------- */
+function pipelineHTML(stages){
+  return `<div class="pipeline">` + stages.map((s,i)=>
+    `<div class="pipeline-node">${s}</div>` + (i < stages.length-1 ? `<span class="pipeline-arrow">→</span>` : "")
+  ).join("") + `</div>`;
+}
+
+function frameworkCardHTML(fw){
+  const examplesHTML = fw.examples.map(ex => `
+    <div class="example-domain">
+      <h4>${ex.domain} example</h4>
+      <dl>
+        ${fw.stages.map((s,i)=>`<dt>${s}</dt><dd>${ex.values[i]}</dd>`).join("")}
+      </dl>
+    </div>
+  `).join("");
+
+  return `
+    <div class="fw-card">
+      <div class="fw-head">
+        <h3><span class="code-chip">${fw.code}</span> ${fw.name}</h3>
+        <span class="cat-pill">${CATEGORIES[fw.category].label}</span>
+      </div>
+      <p class="fw-bestfor">Best used for: ${fw.bestFor}</p>
+      ${pipelineHTML(fw.stages)}
+      ${examplesHTML}
+    </div>
+  `;
+}
+
+function renderCategoryPanel(catKey, customDesc){
+  const panel = document.getElementById("panel-"+catKey);
+  const list = FRAMEWORKS.filter(f=>f.category===catKey);
+  panel.innerHTML = `
+    <h2 class="section-title">${CATEGORIES[catKey].label}</h2>
+    <p class="section-sub">${customDesc || CATEGORIES[catKey].desc}</p>
+    ${list.map(frameworkCardHTML).join("")}
+  `;
+}
+
+function renderOverview(){
+  const panel = document.getElementById("panel-overview");
+  const rows = FRAMEWORKS.map(f => `
+    <tr>
+      <td><span class="code-chip">${f.code}</span></td>
+      <td>${f.stages.join(" → ")}</td>
+      <td><span class="cat-pill">${CATEGORIES[f.category].label}</span></td>
+      <td>${f.bestFor}</td>
+    </tr>
+  `).join("");
+
+  panel.innerHTML = `
+    <h2 class="section-title">All 15 Frameworks</h2>
+    <p class="section-sub">Every framework in the toolkit, at a glance. Use the tabs above to see full worked examples, or head to the Simulator to try one live.</p>
+    <table class="overview">
+      <thead><tr><th>Code</th><th>Meaning</th><th>Category</th><th>Best used for</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+["basic","business","technical","advanced"].forEach(cat => renderCategoryPanel(cat));
+renderCategoryPanel("new", "Five additional frameworks worth having alongside the original ten — pulled from common real-world prompt engineering practice.");
+renderOverview();
+
+/* ---------------------------------------------------------
+   BUILD YOUR OWN FRAMEWORK
+--------------------------------------------------------- */
+const buildPanel = document.getElementById("panel-build");
+buildPanel.innerHTML = `
+  <h2 class="section-title">Design Your Own Framework</h2>
+  <p class="section-sub">A framework is just a memorable, ordered checklist for what a good prompt needs to contain. Here's how to build one that actually holds up.</p>
+
+  <div class="guide-steps">
+    <div class="guide-step"><div class="num">01</div><div><h4>Start from the failure mode</h4><p>Look at prompts that went wrong. Missing context? Vague output format? Each recurring gap becomes a candidate stage.</p></div></div>
+    <div class="guide-step"><div class="num">02</div><div><h4>Pick 3–6 stages, no more</h4><p>Below 3 stages is usually too thin to be useful; above 6 becomes hard to remember and fill in consistently.</p></div></div>
+    <div class="guide-step"><div class="num">03</div><div><h4>Order stages the way a person would naturally think</h4><p>Context before task, task before constraints, constraints before output — order should mirror reasoning, not alphabetise it.</p></div></div>
+    <div class="guide-step"><div class="num">04</div><div><h4>Name each stage with one unambiguous word</h4><p>Avoid overlapping stages like "Goal" and "Objective" in the same framework — pick one and stick with it.</p></div></div>
+    <div class="guide-step"><div class="num">05</div><div><h4>Turn the first letters into a pronounceable acronym</h4><p>This is what makes it memorable enough for a team to actually reuse. Reorder stages slightly if it makes the acronym cleaner, as long as the logic still holds.</p></div></div>
+    <div class="guide-step"><div class="num">06</div><div><h4>Test it on a real prompt, twice</h4><p>Once for a routine task, once for an edge case. If a stage feels forced or redundant every time, cut or merge it.</p></div></div>
+  </div>
+
+  <p class="section-sub" style="margin-bottom:10px;"><strong style="color:var(--text);">Two examples of purpose-built frameworks:</strong></p>
+  <div class="fw-card">
+    <div class="fw-head"><h3><span class="code-chip">DEBUG</span> Define → Explain → Break down → Uncover → Guide</h3><span class="cat-pill">Custom / troubleshooting</span></div>
+    <p class="fw-bestfor">Best used for: incident and bug-report prompts where the AI needs to reason step by step before proposing a fix.</p>
+    ${pipelineHTML(["Define","Explain","Break down","Uncover","Guide"])}
+  </div>
+  <div class="fw-card">
+    <div class="fw-head"><h3><span class="code-chip">SHIP</span> Scope → Hypothesis → Implementation → Proof</h3><span class="cat-pill">Custom / feature development</span></div>
+    <p class="fw-bestfor">Best used for: prompting an AI pair-programmer through a new feature from idea to verification.</p>
+    ${pipelineHTML(["Scope","Hypothesis","Implementation","Proof"])}
+  </div>
+
+  <div class="builder-box" id="builder-box">
+    <h3 style="margin:0 0 4px; font-size:15px;">Framework Builder</h3>
+    <p class="section-sub" style="margin-bottom:16px;">Add your own stages below — the acronym and a fill-in template are generated live.</p>
+    <div id="stage-rows"></div>
+    <div class="btn-row">
+      <button class="btn secondary" id="add-stage">+ Add stage</button>
+      <button class="btn" id="generate-template">Generate template</button>
+      <button class="btn ghost" id="reset-builder">Reset</button>
+    </div>
+    <div class="acronym-preview" id="acronym-preview">— — — —</div>
+    <pre class="output" id="builder-output" style="display:none;"></pre>
+  </div>
+`;
+
+const defaultStages = [
+  { name:"Context", hint:"What's the situation right now?" },
+  { name:"Goal",     hint:"What should the AI accomplish?" },
+  { name:"Rules",    hint:"Any limits or must-follow constraints?" },
+  { name:"Output",   hint:"What shape should the answer take?" }
+];
+
+let builderStages = JSON.parse(JSON.stringify(defaultStages));
+
+function renderStageRows(){
+  const container = document.getElementById("stage-rows");
+  container.innerHTML = builderStages.map((s,i)=>`
+    <div class="stage-row">
+      <input class="stage-name" data-idx="${i}" data-field="name" value="${s.name}" placeholder="Stage name">
+      <input data-idx="${i}" data-field="hint" value="${s.hint}" placeholder="What goes in this stage?">
+      <button class="btn ghost" data-remove="${i}" title="Remove stage">✕</button>
+    </div>
+  `).join("");
+
+  container.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("input", (e)=>{
+      const idx = +e.target.dataset.idx;
+      const field = e.target.dataset.field;
+      builderStages[idx][field] = e.target.value;
+      updateAcronym();
+    });
+  });
+  container.querySelectorAll("[data-remove]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const idx = +b.dataset.remove;
+      builderStages.splice(idx,1);
+      renderStageRows();
+      updateAcronym();
+    });
+  });
+  updateAcronym();
+}
+
+function updateAcronym(){
+  const letters = builderStages.map(s => (s.name || "?").trim().charAt(0).toUpperCase() || "?").join("");
+  document.getElementById("acronym-preview").textContent = letters || "—";
+}
+
+document.getElementById("add-stage").addEventListener("click", ()=>{
+  if(builderStages.length >= 8) return;
+  builderStages.push({name:"New Stage", hint:"Describe this stage"});
+  renderStageRows();
+});
+document.getElementById("reset-builder").addEventListener("click", ()=>{
+  builderStages = JSON.parse(JSON.stringify(defaultStages));
+  renderStageRows();
+  document.getElementById("builder-output").style.display = "none";
+});
+document.getElementById("generate-template").addEventListener("click", ()=>{
+  const acronym = builderStages.map(s => (s.name||"?").trim().charAt(0).toUpperCase()).join("");
+  const lines = builderStages.map(s => `${s.name}: ${s.hint || "(fill this in)"}`);
+  const out = document.getElementById("builder-output");
+  out.style.display = "block";
+  out.textContent = `Your framework: ${acronym}\n${builderStages.map(s=>s.name).join(" → ")}\n\n--- Fill-in template ---\n${lines.join("\n")}`;
+});
+
+renderStageRows();
+
+/* ---------------------------------------------------------
+   SIMULATOR
+--------------------------------------------------------- */
+const simPanel = document.getElementById("panel-simulator");
+simPanel.innerHTML = `
+  <h2 class="section-title">Simulator</h2>
+  <p class="section-sub">Pick any framework from the library, fill in the stages (or autofill a real example), and generate a ready-to-paste prompt.</p>
+  <div class="sim-grid">
+    <div class="sim-col">
+      <h3>1. Choose a framework</h3>
+      <select id="sim-framework" style="width:100%;"></select>
+      <div class="btn-row">
+        <button class="btn secondary" id="sim-autofill">Autofill example</button>
+        <button class="btn ghost" id="sim-clear">Clear fields</button>
+      </div>
+      <div id="sim-fields"></div>
+    </div>
+    <div class="sim-col">
+      <h3>2. Generated prompt <span class="copy-msg" id="copy-msg" style="display:none;">Copied ✓</span></h3>
+      <div class="btn-row" style="margin-top:0; margin-bottom:12px;">
+        <button class="btn" id="sim-generate">Generate prompt</button>
+        <button class="btn ghost" id="sim-copy">Copy to clipboard</button>
+      </div>
+      <pre class="output" id="sim-output">Your assembled prompt will appear here.</pre>
+    </div>
+  </div>
+`;
+
+const simSelect = document.getElementById("sim-framework");
+Object.keys(CATEGORIES).forEach(catKey=>{
+  const group = document.createElement("optgroup");
+  group.label = CATEGORIES[catKey].label;
+  FRAMEWORKS.filter(f=>f.category===catKey).forEach(f=>{
+    const opt = document.createElement("option");
+    opt.value = f.code;
+    opt.textContent = `${f.code} — ${f.stages.join(" / ")}`;
+    group.appendChild(opt);
+  });
+  simSelect.appendChild(group);
+});
+
+function currentSimFramework(){
+  return FRAMEWORKS.find(f=>f.code === simSelect.value) || FRAMEWORKS[0];
+}
+
+function renderSimFields(){
+  const fw = currentSimFramework();
+  const container = document.getElementById("sim-fields");
+  container.innerHTML = fw.stages.map((s,i)=>`
+    <label class="field-label">${s}</label>
+    <textarea data-stage-idx="${i}" placeholder="Describe the ${s.toLowerCase()}..."></textarea>
+  `).join("");
+  document.getElementById("sim-output").textContent = "Your assembled prompt will appear here.";
+}
+
+simSelect.addEventListener("change", renderSimFields);
+
+document.getElementById("sim-autofill").addEventListener("click", ()=>{
+  const fw = currentSimFramework();
+  const ex = fw.examples[Math.floor(Math.random()*fw.examples.length)];
+  document.querySelectorAll("#sim-fields textarea").forEach((ta,i)=>{
+    ta.value = ex.values[i] || "";
+  });
+});
+
+document.getElementById("sim-clear").addEventListener("click", ()=>{
+  document.querySelectorAll("#sim-fields textarea").forEach(ta=> ta.value = "");
+});
+
+document.getElementById("sim-generate").addEventListener("click", ()=>{
+  const fw = currentSimFramework();
+  const values = Array.from(document.querySelectorAll("#sim-fields textarea")).map(t=>t.value.trim());
+  const lines = fw.stages.map((s,i)=> `${s}: ${values[i] || "(not filled in)"}`);
+  document.getElementById("sim-output").textContent =
+    `Framework: ${fw.code}\n\n` + lines.join("\n");
+});
+
+document.getElementById("sim-copy").addEventListener("click", ()=>{
+  const text = document.getElementById("sim-output").textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const msg = document.getElementById("copy-msg");
+    msg.style.display = "inline";
+    setTimeout(()=> msg.style.display="none", 1500);
+  });
+});
+
+renderSimFields();
+</script>
+</body>
+</html>

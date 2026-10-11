@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Design Certification Exam</title>
+<style>
+  :root{
+    --navy:#161A45; --navy2:#232a66; --amber:#D9A441; --amber-dark:#9c7220;
+    --bg:#F6F5F0; --card:#FFFFFF; --ink:#1F2430; --muted:#6B7280; --line:#E4E2D9;
+    --green:#1D7A4C; --green-bg:#E7F5EC; --red:#B3311C; --red-bg:#FBEAE7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  header{background:var(--navy);color:#fff;padding:22px 24px;}
+  header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.2px;}
+  header p{margin:4px 0 0;color:#c7c9e6;font-size:13px;}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 16px 60px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px;margin-bottom:16px;}
+  .btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--navy2);}
+  .btn.secondary{background:transparent;color:var(--navy);border:1px solid var(--navy);}
+  .btn.amber{background:var(--amber);color:#3a2a06;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  input[type=text],input[type=email],input[type=password]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;margin-top:6px;}
+  label{font-size:13px;font-weight:600;color:var(--muted);}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab{padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);}
+  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;}
+  .badge.Easy{background:#E7F5EC;color:var(--green);}
+  .badge.Intermediate{background:#FDF2DC;color:var(--amber-dark);}
+  .badge.Difficult{background:var(--red-bg);color:var(--red);}
+  .topicPill{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;background:#EEF0FA;color:var(--navy);margin-left:6px;}
+  .progress{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 18px;}
+  .progress > div{height:100%;background:var(--amber);}
+  .scenario{font-size:15px;line-height:1.55;margin:12px 0 18px;}
+  .opt{display:block;width:100%;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-bottom:9px;cursor:pointer;font-size:14px;line-height:1.4;}
+  .opt:hover{border-color:var(--navy);}
+  .opt.correct{background:var(--green-bg);border-color:var(--green);}
+  .opt.wrong{background:var(--red-bg);border-color:var(--red);}
+  .explain{margin-top:14px;padding:12px 14px;background:#F4F3EE;border-radius:8px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .row{display:flex;justify-content:space-between;align-items:center;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;}
+  tr.me{background:#FDF2DC;}
+  .stat{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .stat div{flex:1;min-width:120px;background:#F4F3EE;border-radius:8px;padding:14px;text-align:center;}
+  .stat .num{font-size:26px;font-weight:700;color:var(--navy);}
+  .stat .lbl{font-size:12px;color:var(--muted);margin-top:2px;}
+  .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:28px;}
+  .qi{font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .err{color:var(--red);font-size:13px;margin-top:6px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Agent Design Certification Exam</h1>
+  <p>Claude Architect Certificate · Module 2 of 2 · 35 questions</p>
+</header>
+<div class="wrap" id="app"></div>
+
+<script>
+const EXAM_ID = "agent_design_v1";
+const PASS_PERCENT = 70;
+const ADMIN_PASSCODE = "ADMIN2026";
+
+const QUESTIONS = [
+// --- Structured, recoverable error responses (9) ---
+{t:"Errors", d:"Easy", s:"An agent calls a tool with a slightly malformed parameter. The server returns \"Error 500: Internal Server Error\" with no other detail.", q:"Why is this a poor design choice for an agentic system?", o:["It responds too quickly","The model has no actionable information to fix its next call, so it can't recover autonomously","JSON-RPC forbids generic errors","It uses too many tokens"], c:1, e:"Agents can only self-correct if the error tells them what specifically went wrong and how to fix it. A bare 500 gives nothing to act on."},
+{t:"Errors", d:"Easy", s:"You're designing the error schema for a booking tool used by an autonomous agent.", q:"Which field is most essential for letting the agent decide whether retrying makes sense?", o:["A random error ID","An explicit error type/code (e.g. \"invalid_date\", \"rate_limited\") that distinguishes retryable from non-retryable failures","A stack trace","HTTP status text only"], c:1, e:"A typed, categorized error code lets the agent branch its recovery logic — retry, reformat input, or escalate — rather than guessing from an opaque status."},
+{t:"Errors", d:"Easy", s:"A search tool is called by the agent and returns zero matching results for a valid query.", q:"Should this be represented as an error?", o:["Yes, always throw an error","No — an empty result set is a valid response, not a failure; errors should be reserved for actual failures","Yes, and the agent should crash","It doesn't matter either way"], c:1, e:"Conflating 'no results' with 'something broke' forces the agent into unnecessary retry loops. Valid-but-empty results are not errors."},
+{t:"Errors", d:"Intermediate", s:"An agent is calling a rate-limited third-party API through a tool.", q:"Which extra field in the structured error most helps the agent recover automatically?", o:["A retry_after / suggested wait time value","The developer's contact email","A humorous message","Nothing extra is needed"], c:0, e:"retry_after gives the agent a concrete, machine-usable signal for when to retry, instead of guessing or hammering the API immediately."},
+{t:"Errors", d:"Intermediate", s:"An agent submits a form via a tool call, omitting the required \"email\" field.", q:"What's the best structured error response here?", o:["A generic \"bad request\" message","A field-level error identifying exactly which field failed and why, e.g. {\"field\":\"email\",\"reason\":\"missing\"}","Silent failure with no response","A full HTML error page"], c:1, e:"Field-level errors let the model pinpoint and fix exactly the part of its call that was wrong, without re-guessing the entire payload."},
+{t:"Errors", d:"Intermediate", s:"You're designing error handling that distinguishes an error the agent itself caused (bad input) from one it can't fix (the server is down).", q:"Why does this distinction matter?", o:["It doesn't — all errors should be handled identically","It tells the agent whether to retry with different input, wait and retry later, or give up and inform the user","It only matters for internal billing","It's a legal requirement, nothing more"], c:1, e:"The recovery strategy differs completely depending on fault type: fixable-by-agent vs. transient-server vs. unrecoverable. The error must signal which case applies."},
+{t:"Errors", d:"Difficult", s:"You're designing an error taxonomy for a multi-tool agent framework used across many teams.", q:"Which classification scheme best supports autonomous recovery?", o:["A single flat \"error: true/false\" boolean","Categorized errors (validation, auth, rate_limit, not_found, server_error), each mapped to a distinct recommended agent behavior","Only raw HTTP codes with no message","Random, per-deployment error strings"], c:1, e:"A shared taxonomy with behavior guidance per category lets any agent built on the framework reason consistently about how to respond, rather than special-casing every tool."},
+{t:"Errors", d:"Difficult", s:"An authentication error occurs mid-task. The agent keeps retrying the same tool call with the same expired credential.", q:"What structured response prevents this infinite retry loop?", o:["Return the same generic error every time","Return a distinct, explicitly non-retryable \"auth_required\" error that signals the agent to stop and escalate to the user instead of blind-retrying", "Silently drop the request","Return success anyway to unblock the agent"], c:1, e:"Marking the error as non-retryable and semantically distinct (auth_required) breaks the retry loop and routes the agent toward the correct recovery path — asking a human to re-authenticate."},
+{t:"Errors", d:"Difficult", s:"You want an agent to self-correct a malformed tool call — e.g. it sent a date as \"26/08/2026\" instead of the required \"2026-08-26\" — without any human intervention.", q:"What should the error message include to make this possible?", o:["Just \"invalid input\"","Just an error code with no text","The specific validation failure plus the expected format or an example, so the model can reformat and retry","Nothing — fail silently"], c:2, e:"Giving the exact expected format (or an example) is what actually lets the model correct its own output on the next attempt, rather than guessing blindly."},
+// --- Few-shot examples & chain-of-thought (9) ---
+{t:"Few-shot/CoT", d:"Easy", s:"A prompt for classifying support tickets includes three example ticket-to-category pairs before the real ticket to classify.", q:"What is this technique called?", o:["Zero-shot prompting","Few-shot prompting","Fine-tuning","Retrieval-augmented generation"], c:1, e:"Providing labeled input/output examples directly in the prompt is few-shot prompting."},
+{t:"Few-shot/CoT", d:"Easy", s:"You're deciding whether to add few-shot examples to a prompt.", q:"What is the main purpose of including few-shot examples?", o:["To make the prompt longer for its own sake","To demonstrate the desired output format, style, or reasoning pattern so the model mimics it","To confuse the model into being more creative","To replace instructions entirely"], c:1, e:"Examples work by demonstration — showing the model the exact pattern you want it to follow, which is often more reliable than description alone."},
+{t:"Few-shot/CoT", d:"Easy", s:"Your task is simple binary sentiment classification (positive/negative) on short product reviews.", q:"Do you need chain-of-thought reasoning for this task?", o:["Yes, always required for any classification task","Usually unnecessary — CoT helps most with multi-step reasoning, not simple single-step classification","Yes, because CoT is always strictly better","Only if you're using the largest available model"], c:1, e:"CoT adds latency and cost. For simple, single-step judgments it rarely improves accuracy enough to justify the overhead."},
+{t:"Few-shot/CoT", d:"Intermediate", s:"All of your few-shot examples are extremely similar to each other — same length, same phrasing style, same edge case.", q:"What risk does this create?", o:["No risk at all","The model may overfit to the narrow pattern and fail to generalize to different input variations","It speeds up inference significantly","It reduces token cost significantly"], c:1, e:"Narrow, homogeneous examples teach the model a rigid pattern rather than the underlying task, hurting generalization to real-world variety."},
+{t:"Few-shot/CoT", d:"Intermediate", s:"You're designing few-shot examples for an agent that calls tools.", q:"What's a best practice for example diversity?", o:["Use only happy-path examples","Include a mix of typical cases, edge cases, and at least one example showing correct error handling","Use the fewest examples possible, always exactly one","Randomize the correct label's position to add confusion"], c:1, e:"Showing edge cases and correct error-handling behavior in examples teaches the agent how to act when things don't go smoothly, not just the ideal path."},
+{t:"Few-shot/CoT", d:"Intermediate", s:"You're solving a complex, multi-step math word problem with an LLM and accuracy is currently poor.", q:"Which technique most reliably improves accuracy here?", o:["Removing all instructions","Chain-of-thought prompting — asking the model to reason step by step before giving a final answer","Shortening the prompt as much as possible","Providing zero examples"], c:1, e:"CoT is specifically effective for multi-step reasoning tasks, where working through intermediate steps reduces arithmetic and logical errors."},
+{t:"Few-shot/CoT", d:"Difficult", s:"You need step-by-step reasoning for quality, but you don't want to expose that reasoning to end users, and the final output must be valid structured JSON.", q:"What's the recommended pattern?", o:["Skip reasoning entirely to keep things simple","Let the model reason in a hidden step (e.g. a scratchpad or thinking block), then emit only the final structured answer in the required schema","Always show the raw reasoning to the user","Use chain-of-thought and skip the schema requirement"], c:1, e:"Separating hidden reasoning from the final, schema-conformant output gets the accuracy benefit of CoT without leaking internal deliberation or breaking the output contract."},
+{t:"Few-shot/CoT", d:"Difficult", s:"Adding more few-shot examples keeps improving accuracy on your eval set, but latency and token cost are rising sharply with each addition.", q:"What tradeoff principle is at play?", o:["More examples are always free in terms of cost","There's a diminishing-returns tradeoff between example count (context, cost, latency) and marginal accuracy gain — prune toward the minimal effective set","Examples never affect cost or latency","You should always use the maximum number of examples regardless of cost"], c:1, e:"Each added example has a real context/cost/latency price, while its marginal accuracy contribution shrinks. Good prompt design finds the smallest example set that hits the target accuracy."},
+{t:"Few-shot/CoT", d:"Difficult", s:"Your hand-written few-shot examples for a JSON-extraction task don't reflect the messy, malformed inputs the model actually sees in production.", q:"What's the risk, and the fix?", o:["No risk — the model generalizes perfectly regardless of example quality","There's a distribution mismatch that hurts real-world accuracy; examples should be curated from real, representative production data, including hard cases","Fix it by removing all examples","It doesn't matter — output format matters more than example content"], c:1, e:"Examples teach by demonstration, so if they don't represent real production inputs, the model won't generalize well to the cases that actually occur."},
+// --- JSON schema for structured output (9) ---
+{t:"JSON Schema", d:"Easy", s:"You want the model's output constrained to a fixed shape, such as {\"name\": string, \"age\": number}.", q:"What do you define to enforce this shape?", o:["A regular expression only","A JSON schema","A CSS stylesheet","A markdown template"], c:1, e:"JSON Schema is the standard way to formally describe and constrain the structure of JSON output."},
+{t:"JSON Schema", d:"Easy", s:"You need a field restricted to one of a fixed set of allowed string values, like \"low\", \"medium\", \"high\".", q:"Which JSON Schema keyword enforces this?", o:["\"type\"","\"enum\"","\"pattern\"","\"default\""], c:1, e:"\"enum\" restricts a value to a specific list of allowed options."},
+{t:"JSON Schema", d:"Easy", s:"Your schema needs to mark certain object properties as mandatory in every valid response.", q:"Which JSON Schema keyword does this?", o:["\"optional\"","\"required\"","\"must\"","\"force\""], c:1, e:"\"required\" lists the property names that must be present for the object to validate."},
+{t:"JSON Schema", d:"Intermediate", s:"A field must always be an ISO date string, such as \"2026-08-26\".", q:"What's the best way to constrain this in JSON Schema?", o:["Enumerate every possible date value","\"type\": \"string\" combined with \"format\": \"date\" and/or a regex \"pattern\"","\"type\": \"number\"","There's no way to constrain string formats"], c:1, e:"Combining type: string with a format hint (and optionally a regex pattern) is the standard way to constrain date-like strings without enumerating every value."},
+{t:"JSON Schema", d:"Intermediate", s:"You need to represent an \"address\" object that itself contains \"city\" and \"zip\" fields.", q:"How do you express this nested structure in JSON Schema?", o:["Flatten everything into top-level string fields","Define \"address\" as an object-typed property with its own nested \"properties\" schema","JSON Schema can't represent nested objects","Represent it as an array instead"], c:1, e:"JSON Schema supports arbitrary nesting — an object property can itself have a full sub-schema with its own properties and required fields."},
+{t:"JSON Schema", d:"Intermediate", s:"You set \"additionalProperties\": false on your top-level schema.", q:"What effect does this have?", o:["Allows any extra, unspecified fields to pass through","Disallows any properties not explicitly defined in the schema, tightening output to exactly the target shape","Makes every field optional","Has no effect on validation"], c:1, e:"additionalProperties: false rejects any keys not explicitly listed, which prevents the model from adding extraneous or hallucinated fields."},
+{t:"JSON Schema", d:"Difficult", s:"A field is optional but, when present, must be either a string or explicitly null.", q:"How do you express this in JSON Schema?", o:["\"type\": \"string\" only","A union type, e.g. \"type\": [\"string\", \"null\"] (or your schema dialect's nullable equivalent)","Simply omit the field from the schema entirely","\"enum\": [\"null\"]"], c:1, e:"A type union like [\"string\",\"null\"] explicitly allows either a string value or null, which is different from the field being merely absent."},
+{t:"JSON Schema", d:"Difficult", s:"An array field must contain between 1 and 5 items, each matching a defined sub-schema.", q:"Which combination of keywords achieves this?", o:["\"type\": \"array\" with \"items\" (a sub-schema), plus \"minItems\": 1 and \"maxItems\": 5","\"type\": \"array\" with nothing else specified","\"type\": \"string\"","A separate schema written per array index, unbounded"], c:0, e:"items defines the shape of each element, while minItems/maxItems bound the array's length — together they fully constrain the field."},
+{t:"JSON Schema", d:"Difficult", s:"You're deciding how strict to make a schema: locking every field to tight enums and patterns, versus keeping fields looser and more permissive.", q:"What's the architectural tradeoff here?", o:["There's no tradeoff — always maximize strictness","Stricter schemas reduce malformed output but can cause more validation failures on legitimate edge cases; looser schemas are more flexible but risk inconsistent shape — the right balance depends on downstream tolerance for variation","Looser schemas are always strictly better","Schema strictness has no effect on model output"], c:1, e:"Over-constraining can cause valid-but-unanticipated inputs to fail validation and trigger unnecessary retries; under-constraining risks inconsistent downstream data. The right level depends on how tolerant the consuming system is."},
+// --- Validate-and-retry loop (8) ---
+{t:"Validate/Retry", d:"Easy", s:"A model's output fails your JSON schema validation on the first attempt.", q:"What should the system do first?", o:["Silently accept the invalid data anyway","Reject it and feed the specific validation error back to the model, asking it to correct and resubmit","Crash the application","Ignore validation for this call entirely"], c:1, e:"The core recovery mechanism is rejecting invalid output and returning the error to the model so it can retry with a correction — not silently accepting bad data."},
+{t:"Validate/Retry", d:"Easy", s:"You're implementing the standard validate-and-retry pattern for structured output.", q:"What is the core loop structure?", o:["Generate once, never check the result","Generate → validate against schema/rules → if invalid, return the error to the model → regenerate → repeat until valid or max retries reached","Only validate once, at the very end of a multi-step task","Retry infinitely with no upper limit"], c:1, e:"This is the canonical loop: generate, validate, and on failure feed the error back for a bounded number of retries."},
+{t:"Validate/Retry", d:"Easy", s:"Your retry loop currently has no maximum attempt limit configured.", q:"What's the risk?", o:["No risk at all","An infinite loop with runaway cost and latency if the model keeps failing validation","It will always run faster","It guarantees eventual success"], c:1, e:"Without a cap, a persistently failing model call can loop indefinitely, burning tokens and time with no guarantee of ever succeeding."},
+{t:"Validate/Retry", d:"Intermediate", s:"After 3 failed validation attempts on the same call, the system needs to decide what to do next.", q:"What's the recommended fallback instead of retrying forever?", o:["Keep retrying indefinitely","Stop, and return a clear failure state (or fall back to a safe default / human handoff) rather than looping without end","Return the last invalid output as if it were valid","Crash the process silently"], c:1, e:"A bounded retry count with a defined fallback (explicit failure, default value, or escalation to a human) is the safe design — not indefinite retrying."},
+{t:"Validate/Retry", d:"Intermediate", s:"On retry, the system resends the exact same prompt with no mention of what went wrong the first time.", q:"Why is this an ineffective retry strategy?", o:["It's actually effective and considered best practice","The model is likely to repeat the same mistake, since it has no new information about the specific failure to correct","It's the most token-efficient approach possible","It's required by the MCP specification"], c:1, e:"Without feedback about what failed, the model has no reason to behave differently — it will likely reproduce the same error."},
+{t:"Validate/Retry", d:"Intermediate", s:"You're designing the retry feedback message sent back to the model after a validation failure.", q:"What should it include to maximize the chance of a successful correction?", o:["Just the words \"try again\"","The specific validation error(s), which field(s) failed and why, ideally alongside the expected format","Nothing — the model already knows what it did wrong","A completely unrelated new prompt"], c:1, e:"Precise, actionable feedback — what failed, on which field, and what's expected — gives the model what it needs to actually fix the output."},
+{t:"Validate/Retry", d:"Difficult", s:"A validate-and-retry loop wraps a tool with real-world side effects, such as sending an email, on every attempt.", q:"What extra safeguard is critical here?", o:["None — retry freely on every attempt","Only validate output before executing the side-effecting action; never execute an unvalidated or retry-pending call, so retries don't cause duplicate real-world effects","Just retry the side effect multiple times to be safe","Ignore validation for tools that have side effects"], c:1, e:"For side-effecting actions, validation must gate execution — otherwise each retry risks sending duplicate emails, charges, or other irreversible actions."},
+{t:"Validate/Retry", d:"Difficult", s:"You're comparing two retry strategies: (1) always retry with the full original context plus the error, or (2) retry with trimmed context that omits the earlier failed attempt to save tokens.", q:"Which is generally better, and why?", o:["Option 2 — always trim as much as possible","Option 1 generally, since showing the model its previous failed attempt and the specific error helps it avoid repeating the exact same mistake","Neither matters — retry strategy has no effect on success rate","Retry strategy should be chosen randomly"], c:1, e:"Keeping the failed attempt and error in context gives the model a concrete contrast between what it did and what's needed, which meaningfully improves correction accuracy over blind re-generation."}
+];
+
+// ---------- storage helpers ----------
+function sanitize(s){ return (s||"").trim().toLowerCase().replace(/[^a-z0-9_.@-]/g,""); }
+async function saveResult(rec){
+  try{ await window.storage.set(`results:${EXAM_ID}:${rec.pid}`, JSON.stringify(rec), true); }catch(e){ console.error(e); }
+}
+async function loadAllResults(){
+  const out=[];
+  try{
+    const l = await window.storage.list(`results:${EXAM_ID}:`, true);
+    if(l && l.keys){
+      for(const k of l.keys){
+        try{ const r = await window.storage.get(k, true); if(r) out.push(JSON.parse(r.value)); }catch(e){}
+      }
+    }
+  }catch(e){ console.error(e); }
+  return out;
+}
+
+// ---------- state ----------
+let state = { pid:null, name:null, email:null, idx:0, answers:[], picked:null, tab:'exam', started:false, startTime:null, adminOK:false };
+const app = document.getElementById('app');
+
+function render(){
+  if(!state.started){ renderStart(); return; }
+  if(state.tab==='exam') renderExam();
+  else if(state.tab==='result') renderResult();
+  else if(state.tab==='leaderboard') renderLeaderboard();
+  else if(state.tab==='admin') renderAdmin();
+}
+
+function renderStart(){
+  app.innerHTML = `
+  <div class="card">
+    <h2 style="margin-top:0">Before you begin</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6">This exam covers four agent-design topics: recoverable error responses, few-shot examples & chain-of-thought, JSON schema for structured output, and the validate-and-retry loop. Enter your details below — your email is used only as your unique participant ID so your score and mistake review stay tied to you. Passing score: ${PASS_PERCENT}%.</p>
+    <label>Full name</label>
+    <input type="text" id="fname" placeholder="Jane Doe">
+    <div style="height:12px"></div>
+    <label>Email (used as your participant ID)</label>
+    <input type="email" id="femail" placeholder="jane@company.com">
+    <div class="err" id="startErr"></div>
+    <div style="height:18px"></div>
+    <button class="btn amber" onclick="beginExam()">Start exam →</button>
+  </div>`;
+}
+
+window.beginExam = function(){
+  const name = document.getElementById('fname').value.trim();
+  const email = document.getElementById('femail').value.trim();
+  if(!name || !email || !email.includes('@')){
+    document.getElementById('startErr').textContent = 'Enter your name and a valid email to continue.';
+    return;
+  }
+  state.name = name; state.email = email; state.pid = sanitize(email) || sanitize(name+Date.now());
+  state.started = true; state.startTime = Date.now(); state.idx=0; state.answers=[]; state.picked=null; state.tab='exam';
+  render();
+};
+
+function renderTabs(active){
+  const tabs=[['exam','Exam'],['result','My result'],['leaderboard','Leaderboard'],['admin','Admin']];
+  return `<div class="tabs">${tabs.map(([k,l])=>`<div class="tab ${k===active?'active':''}" onclick="switchTab('${k}')">${l}</div>`).join('')}</div>`;
+}
+window.switchTab = function(t){ state.tab=t; render(); };
+
+function renderExam(){
+  const total = QUESTIONS.length;
+  if(state.idx >= total){ finishExam(); return; }
+  const q = QUESTIONS[state.idx];
+  const pct = Math.round((state.idx/total)*100);
+  app.innerHTML = `
+  ${renderTabs('exam')}
+  <div class="card">
+    <div class="row"><div class="qi">Question ${state.idx+1} of ${total}</div><span><span class="badge ${q.d}">${q.d}</span><span class="topicPill">${q.t}</span></span></div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="scenario">${q.s}<br><br><strong>${q.q}</strong></div>
+    <div id="opts">${q.o.map((o,i)=>`<button class="opt" onclick="pickOpt(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div>
+    <div id="explainBox"></div>
+    <div style="height:14px"></div>
+    <button class="btn" id="nextBtn" style="display:none" onclick="nextQuestion()">${state.idx===total-1?'Finish exam':'Next question →'}</button>
+  </div>`;
+}
+
+window.pickOpt = function(i){
+  if(state.picked!==null) return;
+  state.picked = i;
+  const q = QUESTIONS[state.idx];
+  const correct = i===q.c;
+  state.answers.push({i:state.idx, picked:i, correct});
+  document.querySelectorAll('#opts .opt').forEach((el,idx)=>{
+    if(idx===q.c) el.classList.add('correct');
+    else if(idx===i) el.classList.add('wrong');
+  });
+  document.getElementById('explainBox').innerHTML = `<div class="explain"><strong>${correct?'Correct.':'Not quite.'}</strong> ${q.e}</div>`;
+  document.getElementById('nextBtn').style.display='inline-block';
+};
+
+window.nextQuestion = function(){
+  state.idx++; state.picked=null; render();
+};
+
+async function finishExam(){
+  const total = QUESTIONS.length;
+  const correctCount = state.answers.filter(a=>a.correct).length;
+  const pct = Math.round((correctCount/total)*100);
+  const rec = {
+    pid: state.pid, name: state.name, email: state.email,
+    score: correctCount, total, pct, pass: pct>=PASS_PERCENT,
+    answers: state.answers, timeMs: Date.now()-state.startTime, ts: new Date().toISOString()
+  };
+  await saveResult(rec);
+  state.lastRec = rec; state.tab='result';
+  render();
+}
+
+function renderResult(){
+  const rec = state.lastRec;
+  if(!rec){
+    app.innerHTML = `${renderTabs('result')}<div class="card"><p>Complete the exam to see your result here.</p></div>`;
+    return;
+  }
+  const mistakes = rec.answers.filter(a=>!a.correct);
+  app.innerHTML = `
+  ${renderTabs('result')}
+  <div class="card">
+    <h2 style="margin-top:0">Your result</h2>
+    <div class="stat">
+      <div><div class="num">${rec.score}/${rec.total}</div><div class="lbl">Score</div></div>
+      <div><div class="num">${rec.pct}%</div><div class="lbl">Percentage</div></div>
+      <div><div class="num" style="color:${rec.pass?'var(--green)':'var(--red)'}">${rec.pass?'PASS':'FAIL'}</div><div class="lbl">Threshold ${PASS_PERCENT}%</div></div>
+    </div>
+    <p style="color:var(--muted);font-size:13px">This result is visible only to you (${rec.email}) and to the exam owner via the Admin tab.</p>
+    ${mistakes.length ? `<h3>Review your mistakes</h3>` + mistakes.map(m=>{
+      const q = QUESTIONS[m.i];
+      return `<div style="margin-bottom:14px;padding:12px;border:1px solid var(--line);border-radius:8px">
+        <div class="qi">Question ${m.i+1} · <span class="badge ${q.d}">${q.d}</span> <span class="topicPill">${q.t}</span></div>
+        <div style="font-size:14px;margin:6px 0"><strong>${q.q}</strong></div>
+        <div style="font-size:13px;color:var(--red)">Your answer: ${q.o[m.picked]}</div>
+        <div style="font-size:13px;color:var(--green)">Correct answer: ${q.o[q.c]}</div>
+        <div class="explain">${q.e}</div>
+      </div>`;
+    }).join('') : `<p style="color:var(--green)">No mistakes — perfect score.</p>`}
+  </div>`;
+}
+
+async function renderLeaderboard(){
+  app.innerHTML = `${renderTabs('leaderboard')}<div class="card"><p style="color:var(--muted)">Loading leaderboard…</p></div>`;
+  const all = await loadAllResults();
+  all.sort((a,b)=> b.pct - a.pct || a.timeMs - b.timeMs);
+  const rows = all.map((r,i)=>`<tr class="${r.pid===state.pid?'me':''}"><td>${i+1}</td><td>${r.name}</td><td>${r.score}/${r.total}</td><td>${r.pct}%</td><td>${r.pass?'Pass':'Fail'}</td></tr>`).join('');
+  app.innerHTML = `
+  ${renderTabs('leaderboard')}
+  <div class="card">
+    <h2 style="margin-top:0">Leaderboard</h2>
+    <p style="color:var(--muted);font-size:13px">Only names and scores are shown here. Your row is highlighted.</p>
+    <table><thead><tr><th>#</th><th>Name</th><th>Score</th><th>%</th><th>Result</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="color:var(--muted)">No attempts yet.</td></tr>'}</tbody></table>
+  </div>`;
+}
+
+function renderAdmin(){
+  if(!state.adminOK){
+    app.innerHTML = `
+    ${renderTabs('admin')}
+    <div class="card">
+      <h2 style="margin-top:0">Admin access</h2>
+      <label>Passcode</label>
+      <input type="password" id="pw">
+      <div class="err" id="pwErr"></div>
+      <div style="height:14px"></div>
+      <button class="btn" onclick="checkAdmin()">Unlock</button>
+    </div>`;
+    return;
+  }
+  app.innerHTML = `${renderTabs('admin')}<div class="card"><p style="color:var(--muted)">Loading all participant results…</p></div>`;
+  loadAllResults().then(all=>{
+    all.sort((a,b)=> b.pct - a.pct || a.timeMs - b.timeMs);
+    const rows = all.map(r=>`<tr><td>${r.name}</td><td>${r.email}</td><td>${r.score}/${r.total}</td><td>${r.pct}%</td><td>${r.pass?'Pass':'Fail'}</td><td>${new Date(r.ts).toLocaleString()}</td></tr>`).join('');
+    app.innerHTML = `
+    ${renderTabs('admin')}
+    <div class="card">
+      <div class="row"><h2 style="margin-top:0">Admin dashboard</h2><button class="btn secondary" onclick="exportCSV()">Export CSV</button></div>
+      <p style="color:var(--muted);font-size:13px">${all.length} attempt(s) recorded for this exam.</p>
+      <table><thead><tr><th>Name</th><th>Email</th><th>Score</th><th>%</th><th>Result</th><th>Submitted</th></tr></thead><tbody>${rows || '<tr><td colspan="6" style="color:var(--muted)">No attempts yet.</td></tr>'}</tbody></table>
+    </div>`;
+    state._adminData = all;
+  });
+}
+
+window.checkAdmin = function(){
+  const v = document.getElementById('pw').value;
+  if(v===ADMIN_PASSCODE){ state.adminOK=true; render(); }
+  else document.getElementById('pwErr').textContent = 'Incorrect passcode.';
+};
+
+window.exportCSV = function(){
+  const all = state._adminData || [];
+  const qCols = QUESTIONS.map((q,i)=>`Q${i+1}`);
+  const header = ['Name','Email','Score','Percent','Result','SubmittedAt', ...qCols];
+  const lines = [header.join(',')];
+  all.forEach(r=>{
+    const answerMap = {}; r.answers.forEach(a=> answerMap[a.i]=a.correct?'1':'0');
+    const qvals = QUESTIONS.map((q,i)=> answerMap[i] ?? '');
+    const row = [r.name, r.email, r.score, r.pct, r.pass?'Pass':'Fail', r.ts, ...qvals].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+    lines.push(row.join(','));
+  });
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${EXAM_ID}_results.csv`;
+  a.click();
+};
+
+render();
+</script>
+<div class="foot">Agent Design Certification Exam · ${QUESTIONS.length} questions</div>
+</body>
+</html>

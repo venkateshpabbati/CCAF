@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code — Lab Guide (Day 2)</title>
+<style>
+:root{
+  --bg:#f6f5f2;
+  --panel:#ffffff;
+  --ink:#1e1b16;
+  --sub:#6b6459;
+  --line:#e4e0d8;
+  --accent:#a3623b;
+  --accent-ink:#ffffff;
+  --code-bg:#1e1b16;
+  --code-ink:#f2ece0;
+  --tag:#eef0e8;
+  --ok:#3f7a4f;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Segoe UI',ui-sans-serif,system-ui,Arial,sans-serif;
+  line-height:1.55;
+}
+.shell{display:flex;min-height:100vh;}
+
+/* Sidebar */
+.sidebar{
+  width:260px;
+  flex-shrink:0;
+  background:var(--panel);
+  border-right:1px solid var(--line);
+  padding:22px 14px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+.brand{
+  font-size:13px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--sub);
+  margin:0 8px 4px;
+}
+.brand strong{
+  display:block;
+  font-size:19px;
+  letter-spacing:0;
+  text-transform:none;
+  color:var(--ink);
+  margin-top:2px;
+}
+nav{margin-top:22px;}
+.nav-btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  text-align:left;
+  background:none;
+  border:none;
+  padding:10px 10px;
+  border-radius:8px;
+  font-size:14px;
+  color:var(--ink);
+  cursor:pointer;
+  margin-bottom:2px;
+}
+.nav-btn .num{
+  font-size:11px;
+  color:var(--sub);
+  min-width:18px;
+}
+.nav-btn:hover{background:var(--tag);}
+.nav-btn.active{background:var(--accent);color:var(--accent-ink);}
+.nav-btn.active .num{color:var(--accent-ink);opacity:.8;}
+
+/* Main */
+.main{flex:1;padding:36px 48px;max-width:900px;}
+.progress-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:22px;
+}
+.progress-bar{
+  height:4px;background:var(--line);border-radius:4px;overflow:hidden;flex:1;margin-right:16px;
+}
+.progress-fill{height:100%;background:var(--accent);width:0%;transition:width .3s;}
+.progress-label{font-size:12px;color:var(--sub);white-space:nowrap;}
+
+.panel{display:none;}
+.panel.active{display:block;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+.panel h1{font-size:26px;margin:0 0 6px;}
+.panel .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+.panel .lead{color:var(--sub);font-size:15px;margin-bottom:26px;max-width:640px;}
+
+h2{font-size:17px;margin:30px 0 8px;padding-top:2px;}
+h3{font-size:14.5px;margin:18px 0 6px;color:var(--ink);}
+p{font-size:14.5px;color:#3a352d;}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  margin-bottom:16px;
+}
+.step-list{list-style:none;margin:0;padding:0;}
+.step-list li{
+  display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);
+  font-size:14.5px;
+}
+.step-list li:last-child{border-bottom:none;}
+.step-list .dot{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  background:var(--tag);color:var(--accent);font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;
+}
+
+pre{
+  background:var(--code-bg);
+  color:var(--code-ink);
+  padding:14px 16px;
+  border-radius:8px;
+  font-size:13px;
+  overflow-x:auto;
+  position:relative;
+  margin:10px 0 16px;
+  font-family:'SF Mono',Consolas,Monaco,monospace;
+}
+.code-wrap{position:relative;}
+.copy-btn{
+  position:absolute;top:8px;right:8px;
+  background:#33302a;color:#d8d2c4;
+  border:none;font-size:11px;padding:4px 9px;border-radius:5px;
+  cursor:pointer;opacity:.85;
+}
+.copy-btn:hover{opacity:1;}
+.copy-btn.copied{background:var(--ok);color:#fff;}
+
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:13.5px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+th{color:var(--sub);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
+td code, p code, li code{
+  background:var(--tag);padding:1px 6px;border-radius:4px;font-size:12.5px;
+  font-family:'SF Mono',Consolas,Monaco,monospace;color:#8a4a26;
+}
+
+.badge{
+  display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;
+  background:var(--tag);color:var(--accent);margin-bottom:2px;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:800px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+.flow{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;margin:10px 0 18px;
+}
+.flow .node{background:var(--tag);border-radius:6px;padding:6px 10px;color:var(--ink);}
+.flow .arrow{color:var(--sub);}
+
+.callout{
+  border-left:3px solid var(--accent);background:#fbf3ec;padding:10px 14px;border-radius:0 8px 8px 0;
+  font-size:13.5px;margin:14px 0;color:#5c4530;
+}
+
+.checklist{list-style:none;margin:0;padding:0;}
+.checklist li{display:flex;gap:8px;align-items:flex-start;font-size:14px;padding:5px 0;}
+.checklist input{margin-top:3px;}
+
+.nav-footer{
+  display:flex;justify-content:space-between;margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+}
+.nav-footer button{
+  background:var(--panel);border:1px solid var(--line);padding:9px 16px;border-radius:8px;
+  font-size:13.5px;cursor:pointer;color:var(--ink);
+}
+.nav-footer button:hover{border-color:var(--accent);color:var(--accent);}
+.nav-footer button:disabled{opacity:.35;cursor:default;}
+
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#d8d2c4;border-radius:8px;}
+
+@media(max-width:760px){
+  .shell{flex-direction:column;}
+  .sidebar{width:100%;height:auto;position:relative;}
+  .main{padding:24px 20px;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="brand">Lab Guide<strong>Claude Code — Day 2</strong></div>
+  <nav id="navList"></nav>
+</aside>
+
+<main class="main">
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">1 / 11</div>
+  </div>
+  <div id="panels"></div>
+
+  <div class="nav-footer">
+    <button id="prevBtn" onclick="go(current-1)">← Previous</button>
+    <button id="nextBtn" onclick="go(current+1)">Next →</button>
+  </div>
+</main>
+
+</div>
+
+<script>
+const sections = [
+{
+  id:"setup", title:"Install & Setup", num:"01",
+  kicker:"Getting started", lead:"Install Claude Code in VS Code using either the CLI or the extension, and try your first prompts.",
+  html:`
+  <div class="grid2">
+    <div class="card">
+      <span class="badge">Option 1 — CLI</span>
+      <div class="code-wrap"><pre><code>node --version
+npm install -g @anthropic-ai/claude-code
+claude --version
+claude</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    </div>
+    <div class="card">
+      <span class="badge">Option 2 — Extension</span>
+      <p>VS Code → Extensions → search <code>claudecode</code> for VS Code → Install.</p>
+      <p>Once installed, just talk to it:</p>
+      <ul class="step-list">
+        <li><span class="dot">"</span> "Explain this project"</li>
+        <li><span class="dot">"</span> "Fix the errors in this file"</li>
+        <li><span class="dot">"</span> "Create a login page"</li>
+        <li><span class="dot">"</span> "Refactor this function"</li>
+      </ul>
+    </div>
+  </div>
+  <h2>Core slash commands</h2>
+  <table>
+    <tr><th>Command</th><th>Purpose</th></tr>
+    <tr><td><code>/init</code></td><td>Creates a CLAUDE.md file and establishes project instructions.</td></tr>
+    <tr><td><code>/help</code></td><td>Shows available commands and usage.</td></tr>
+    <tr><td><code>/clear</code></td><td>Clears the current conversation context.</td></tr>
+    <tr><td><code>/compact</code></td><td>Compacts conversation to reduce context usage.</td></tr>
+    <tr><td><code>/cost</code></td><td>Shows usage and cost info for the session.</td></tr>
+    <tr><td><code>/model</code></td><td>View or change the Claude model in use.</td></tr>
+    <tr><td><code>/permissions</code></td><td>Review or change tool permissions.</td></tr>
+    <tr><td><code>/config</code></td><td>View or modify Claude Code configuration.</td></tr>
+    <tr><td><code>/memory</code></td><td>View or manage memory/instruction sources.</td></tr>
+    <tr><td><code>/status</code></td><td>Shows session, project, and config status.</td></tr>
+    <tr><td><code>/doctor</code></td><td>Diagnoses installation/config problems.</td></tr>
+  </table>
+  `
+},
+{
+  id:"slash", title:"Custom Slash Commands", num:"02",
+  kicker:"Reusable workflows", lead:"Create your own slash commands by dropping markdown files into .claude/commands.",
+  html:`
+  <div class="callout">The filename becomes the command name: <code>.claude/commands/review.md</code> → <code>/review</code></div>
+  <h2>Option 1 — Basic command</h2>
+  <div class="code-wrap"><pre><code>.claude/commands/review.md
+---
+Review the current code.
+
+Check for:
+- Bugs
+- Security issues
+- Performance problems
+- Code quality
+- Missing error handling
+- Missing tests
+
+Provide:
+1. Issues found
+2. Severity
+3. Recommended fix
+4. Code changes required</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <p>Invoke with <code>/review</code>.</p>
+
+  <h2>Option 2 — With arguments</h2>
+  <div class="code-wrap"><pre><code>Review the following component:
+$ARGUMENTS
+
+Check:
+- Code quality
+- Bugs
+- Security
+- Performance
+- Testing
+
+Provide recommendations and suggested fixes.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <p>Usage: <code>/review authentication module</code></p>
+
+  <h2>Common commands to build</h2>
+  <div class="grid3">
+    <div class="card"><code>/test</code><p style="margin:6px 0 0">Generate or improve tests</p></div>
+    <div class="card"><code>/debug</code><p style="margin:6px 0 0">Analyze and fix an error</p></div>
+    <div class="card"><code>/refactor</code><p style="margin:6px 0 0">Refactor selected code</p></div>
+    <div class="card"><code>/document</code><p style="margin:6px 0 0">Generate technical docs</p></div>
+    <div class="card"><code>/security</code><p style="margin:6px 0 0">Perform a security review</p></div>
+    <div class="card"><code>/api</code><p style="margin:6px 0 0">Create or modify an API</p></div>
+    <div class="card"><code>/deploy</code><p style="margin:6px 0 0">Prepare deployment steps</p></div>
+    <div class="card"><code>/explain</code><p style="margin:6px 0 0">Explain the selected code</p></div>
+  </div>
+  `
+},
+{
+  id:"skillsub", title:"Skill vs Slash vs Subagent", num:"03",
+  kicker:"Concepts", lead:"Three different building blocks — know when to reach for each.",
+  html:`
+  <div class="grid3">
+    <div class="card"><span class="badge">WHAT</span><h3 style="margin-top:6px">Slash Command</h3><p>A shortcut that tells Claude to perform a specific workflow. Best for repeated developer tasks.<br><em>e.g. /review, /test, /deploy</em></p></div>
+    <div class="card"><span class="badge">HOW</span><h3 style="margin-top:6px">Skill</h3><p>A reusable set of knowledge, instructions, and workflow Claude can use when needed. Best for specialized capabilities.<br><em>e.g. code review skill, SQL skill</em></p></div>
+    <div class="card"><span class="badge">WHO</span><h3 style="margin-top:6px">Subagent</h3><p>A separate Claude worker given a specific role/task. Best for delegating complex work.<br><em>e.g. security agent, testing agent</em></p></div>
+  </div>
+
+  <h2>Create a skill</h2>
+  <div class="code-wrap"><pre><code>Create a Claude Code skill called "code-review".
+
+Create:
+.claude/skills/code-review/SKILL.md
+
+The skill should define a professional code-review methodology.
+
+Include:
+- Purpose
+- When the skill should be used
+- Code quality checks
+- Security checks
+- Performance checks
+- Error handling checks
+- Testing checks
+- Review severity levels
+- Review output format
+
+Reusable across projects and languages.
+Do not create a slash command. Create only the SKILL.md file.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Create a subagent</h2>
+  <div class="code-wrap"><pre><code>Create a Claude Code subagent called "security-reviewer".
+Role: senior application security engineer.
+
+It should:
+- Review source code for security vulnerabilities
+- Identify authentication and authorization issues
+- Check for injection vulnerabilities
+- Check secrets and credential exposure
+- Check insecure dependencies
+- Check input validation
+- Check sensitive data handling
+
+The subagent must:
+- Not modify production code
+- Provide evidence for each finding
+- Assign severity as Critical, High, Medium, or Low
+- Provide remediation recommendations</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  `
+},
+{
+  id:"perms", title:"Permission Models", num:"04",
+  kicker:"Access control", lead:"Control which tools and actions Claude can run automatically using allow-lists and deny-lists.",
+  html:`
+  <div class="flow"><span class="node">/permissions</span><span class="arrow">review rules</span><span class="node">/config</span><span class="arrow">inspect config</span></div>
+
+  <h2>Allow-list — read-only environment</h2>
+  <div class="code-wrap"><pre><code>{
+  "permissions": {
+    "allow": ["Read", "Glob", "Grep"]
+  }
+}</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <p>Read/search allowed, everything else requires permission.</p>
+
+  <h2>Deny-list — block dangerous commands</h2>
+  <div class="code-wrap"><pre><code>{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)"
+    ]
+  }
+}</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Allow + deny — enterprise setup</h2>
+  <div class="code-wrap"><pre><code>{
+  "permissions": {
+    "allow": [
+      "Read", "Glob", "Grep",
+      "Bash(npm test)",
+      "Bash(npm run lint)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)"
+    ]
+  }
+}</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <div class="callout">Allow-list answers "what is Claude allowed to do?" Deny-list answers "what must Claude never do?" For production: explicitly allow needed operations and separately deny high-risk ones — a deny-list alone isn't enough.</div>
+
+  <h2>Permission mode commands</h2>
+  <table>
+    <tr><th>Command</th><th>Purpose</th></tr>
+    <tr><td><code>claude --permission-mode plan</code></td><td>Analyze and plan before making changes</td></tr>
+    <tr><td><code>claude --permission-mode default</code></td><td>Default mode</td></tr>
+    <tr><td><code>claude --permission-mode acceptEdits</code></td><td>Active development, auto-accept edits</td></tr>
+    <tr><td><code>claude --help</code></td><td>Check available modes for your version</td></tr>
+  </table>
+  <p>Sandbox settings: check <code>claude --help</code> and <code>/config</code> for filesystem/network restrictions.</p>
+  `
+},
+{
+  id:"headless", title:"Headless / Print Mode", num:"05",
+  kicker:"Automation", lead:"Run Claude Code from the terminal without an interactive conversation — ideal for CI/CD and scripts.",
+  html:`
+  <div class="grid2">
+    <div class="card"><span class="badge">Interactive</span>
+      <div class="flow"><span class="node">claude</span><span class="arrow">→</span><span class="node">you ask</span><span class="arrow">→</span><span class="node">Claude responds</span></div>
+    </div>
+    <div class="card"><span class="badge">Headless</span>
+      <div class="flow"><span class="node">script/CI</span><span class="arrow">→</span><span class="node">claude -p "task"</span><span class="arrow">→</span><span class="node">output</span></div>
+    </div>
+  </div>
+
+  <h2>Basic usage</h2>
+  <div class="code-wrap"><pre><code>claude -p "Explain this project"
+claude --print "Explain this project"</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Examples</h2>
+  <div class="code-wrap"><pre><code># Code review
+claude -p "Review the code in this project and identify bugs and security issues."
+
+# Generate tests
+claude -p "Analyze the Python files and create unit tests for the main functions."
+
+# Commit message
+claude -p "Analyze the current git diff and generate a concise commit message."
+
+# Pipe input
+git diff | claude -p "Review these changes and identify potential problems."
+
+# Structured output for automation
+claude -p "Analyze this code and return the findings" --output-format json</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <div class="callout"><strong>Interactive:</strong> Human talks to Claude. <strong>Headless:</strong> Program talks to Claude — this is why it matters for agentic AI, automation, CI/CD, and DevOps.</div>
+  `
+},
+{
+  id:"cicd", title:"CI/CD Review Pipeline", num:"06",
+  kicker:"GitHub Actions", lead:"Trigger Claude Code automatically on pull requests to review code changes.",
+  html:`
+  <div class="flow">
+    <span class="node">Push</span><span class="arrow">→</span><span class="node">PR</span><span class="arrow">→</span><span class="node">GitHub Actions</span><span class="arrow">→</span><span class="node">Claude Code</span><span class="arrow">→</span><span class="node">Review result</span>
+  </div>
+
+  <ul class="step-list">
+    <li><span class="dot">1</span> Create <code>.claude/commands/review.md</code> with your review checklist (bugs, security, performance, quality, error handling, tests, breaking changes).</li>
+    <li><span class="dot">2</span> Test locally: <code>claude -p "/review"</code></li>
+    <li><span class="dot">3</span> Create <code>.github/workflows/claude-code-review.yml</code></li>
+    <li><span class="dot">4</span> Store <code>ANTHROPIC_API_KEY</code> as a GitHub Actions secret — never in the YAML.</li>
+    <li><span class="dot">5</span> Scope the review to just the diff, not the whole repo.</li>
+    <li><span class="dot">6</span> Return structured JSON so the pipeline can gate on severity.</li>
+  </ul>
+
+  <h2>Workflow file</h2>
+  <div class="code-wrap"><pre><code>name: Claude Code Review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run Claude Code Review
+        run: |
+          claude -p "Review the current pull request changes for bugs, security issues, performance problems, and code quality. Do not modify files."</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Focused diff review</h2>
+  <div class="code-wrap"><pre><code>git diff origin/main...HEAD | claude -p \\
+"Review these changes for bugs, security vulnerabilities, performance issues and code quality. Do not modify files."</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Quality gate — structured JSON</h2>
+  <div class="code-wrap"><pre><code>Return JSON with:
+{
+  "status": "PASS|FAIL",
+  "critical": 0,
+  "high": 0,
+  "medium": 0,
+  "low": 0,
+  "findings": []
+}</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <p>The pipeline inspects the result: Critical/High → FAIL, else PASS.</p>
+  `
+},
+{
+  id:"tests", title:"Automated Test Generation", num:"07",
+  kicker:"Workflow", lead:"Have Claude Code analyze a project, find missing tests, generate them, run them, and report.",
+  html:`
+  <div class="flow">
+    <span class="node">Analyze</span><span class="arrow">→</span><span class="node">Identify gaps</span><span class="arrow">→</span><span class="node">Plan</span><span class="arrow">→</span><span class="node">Generate</span><span class="arrow">→</span><span class="node">Run</span><span class="arrow">→</span><span class="node">Fix</span><span class="arrow">→</span><span class="node">Report</span>
+  </div>
+
+  <h2>Full prompt</h2>
+  <div class="code-wrap"><pre><code>Create an automated test generation workflow for this project using Claude Code.
+
+Requirements:
+1. Analyze the complete project structure.
+2. Identify language, framework, testing framework, package manager.
+3. Identify source files/functions with insufficient or missing tests.
+4. Generate unit tests for the identified code.
+5. Cover: happy-path, edge cases, invalid inputs, error handling, boundary conditions.
+6. Follow existing project testing conventions.
+7. Do not modify production code unless absolutely necessary.
+8. Do not modify existing tests unless required to fix an incorrect test.
+9. Run the generated tests.
+10. Analyze failures and fix the tests where appropriate.
+11. Run the complete test suite after changes.
+12. Generate a final test-generation report.
+
+Report must include: files analyzed, tests created, test cases created,
+tests executed/passed/failed, coverage gaps, recommendations.
+
+Before making changes, explain the proposed testing approach first.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Turn it into /generate-tests</h2>
+  <p>Save as <code>.claude/commands/generate-tests.md</code>:</p>
+  <ul class="checklist">
+    <li><input type="checkbox">Never delete existing tests</li>
+    <li><input type="checkbox">Never weaken assertions to force a pass</li>
+    <li><input type="checkbox">Don't modify production code unless necessary</li>
+    <li><input type="checkbox">Run full suite after generation</li>
+  </ul>
+  <p>Developers then just run <code>/generate-tests</code>.</p>
+  `
+},
+{
+  id:"pr", title:"End-to-End PR Workflow", num:"08",
+  kicker:"Full lifecycle", lead:"Automate the journey from code change to reviewed, tested pull request.",
+  html:`
+  <div class="flow">
+    <span class="node">Branch</span><span class="arrow">→</span><span class="node">Implement</span><span class="arrow">→</span><span class="node">Tests</span><span class="arrow">→</span><span class="node">Lint</span><span class="arrow">→</span><span class="node">Security</span><span class="arrow">→</span><span class="node">Commit</span><span class="arrow">→</span><span class="node">Push</span><span class="arrow">→</span><span class="node">PR</span><span class="arrow">→</span><span class="node">CI</span><span class="arrow">→</span><span class="node">Human approval</span><span class="arrow">→</span><span class="node">Merge</span>
+  </div>
+
+  <h2>Command set</h2>
+  <div class="code-wrap"><pre><code>.claude/
+├── commands/
+│   ├── implement.md
+│   ├── generate-tests.md
+│   ├── review.md
+│   ├── security.md
+│   └── prepare-pr.md
+├── skills/
+│   ├── code-review/
+│   ├── testing/
+│   └── security/
+└── agents/
+    ├── code-reviewer.md
+    ├── test-engineer.md
+    └── security-reviewer.md</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <p>Daily flow: <code>/implement → /generate-tests → /review → /security → /prepare-pr</code></p>
+
+  <div class="callout">
+    <strong>Hard rules:</strong> never push directly to main, never auto-merge, don't delete or weaken tests, never expose secrets/credentials, ask for approval before destructive operations, keep commits focused, don't touch unrelated files.
+  </div>
+
+  <h2>PR review prompt</h2>
+  <div class="code-wrap"><pre><code>Review this Pull Request as a senior software engineer.
+
+Analyze: correctness, bugs, security vulnerabilities, performance,
+maintainability, error handling, test coverage, API compatibility,
+breaking changes.
+
+For every finding provide: Severity, File, Location, Issue, Impact,
+Recommended Fix.
+
+Do not approve code containing Critical or High severity issues.
+Do not modify files during the review.
+Return a structured Markdown review.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Final report format</h2>
+  <table>
+    <tr><td>PR Title</td><td>Summary</td></tr>
+    <tr><td>Files Changed</td><td>Tests</td></tr>
+    <tr><td>Security Review</td><td>CI/CD Status</td></tr>
+    <tr><td>Known Issues</td><td>Recommended Next Step</td></tr>
+  </table>
+  `
+},
+{
+  id:"github", title:"Connect to a GitHub Repo", num:"09",
+  kicker:"Local workflow", lead:"Work with a normal GitHub repository directly through your local Git setup — no Actions required.",
+  html:`
+  <ul class="step-list">
+    <li><span class="dot">1</span> <strong>Clone:</strong> <code>git clone https://github.com/USER/REPO.git && cd REPO</code></li>
+    <li><span class="dot">2</span> <strong>Start Claude Code:</strong> <code>claude</code> — it auto-detects the Git repo.</li>
+    <li><span class="dot">3</span> <strong>Check status:</strong> <code>/status</code>, or ask "Check the current Git repository status and explain the current branch and uncommitted changes."</li>
+    <li><span class="dot">4</span> <strong>Ask Claude to work:</strong> "Analyze this repository and explain its architecture. Do not modify anything." Then: "Find the main authentication module and improve its error handling. Create appropriate tests. Run the tests after making changes."</li>
+    <li><span class="dot">5</span> <strong>Review:</strong> "Review all changes you made. Show me the files modified and explain each change. Do not commit yet." Then <code>git status</code> / <code>git diff</code>.</li>
+    <li><span class="dot">6</span> <strong>Commit:</strong> Ask Claude to draft a message, then <code>git add . && git commit -m "..."</code></li>
+    <li><span class="dot">7</span> <strong>Push:</strong> <code>git checkout -b feature/auth-improvement && git push -u origin feature/auth-improvement</code>, then open the PR on GitHub.</li>
+  </ul>
+
+  <div class="callout">Two scenarios: <strong>local repo</strong> (clone → Claude Code → commit → push — the simplest approach) vs <strong>automated CI/CD</strong> (PR → GitHub Actions → Claude Code → automated review).</div>
+  `
+},
+{
+  id:"observability", title:"Observability", num:"10",
+  kicker:"Monitoring", lead:"See what Claude Code is doing: tool calls, token usage, cost, errors, and sessions.",
+  html:`
+  <div class="grid2">
+    <div class="card"><h3 style="margin-top:0">Session basics</h3>
+      <table><tr><td><code>/status</code></td><td>Session & environment info</td></tr>
+      <tr><td><code>/cost</code></td><td>Usage / cost info</td></tr>
+      <tr><td><code>/doctor</code></td><td>Diagnose install/config issues</td></tr></table>
+    </div>
+    <div class="card"><h3 style="margin-top:0">Debug & verbose</h3>
+      <div class="code-wrap"><pre><code>claude --debug</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p>Toggle expanded output in-session: <code>Ctrl + O</code></p>
+    </div>
+  </div>
+
+  <h2>Layers to monitor (enterprise)</h2>
+  <table>
+    <tr><th>Layer</th><th>What to monitor</th></tr>
+    <tr><td>Model</td><td>Requests, responses, latency, token usage</td></tr>
+    <tr><td>Claude Code</td><td>Sessions, commands, tool execution</td></tr>
+    <tr><td>Tools</td><td>Tool calls, failures, execution time</td></tr>
+    <tr><td>MCP</td><td>Server calls, errors, connectivity</td></tr>
+    <tr><td>Git</td><td>Branches, commits, PR changes</td></tr>
+    <tr><td>CI/CD</td><td>Build, test, security, deployment results</td></tr>
+    <tr><td>Security</td><td>Permission decisions, denied operations</td></tr>
+    <tr><td>Cost</td><td>Token/API usage and spending</td></tr>
+  </table>
+
+  <h2>Hands-on demo</h2>
+  <div class="code-wrap"><pre><code>claude --debug
+# then:
+Analyze this project and identify the files responsible for authentication.
+Do not modify anything.
+# then:
+/status
+/cost
+/doctor</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <div class="callout">For mature setups, combine Claude Code's own diagnostics with CI/CD logs, application logs, metrics, and tracing — not just the terminal.</div>
+  `
+},
+{
+  id:"tools", title:"Tool Design (MCP)", num:"11",
+  kicker:"Building tools", lead:"Claude decides whether to use a tool based on its name, description, and parameter schema — not its internals.",
+  html:`
+  <div class="flow">
+    <span class="node">Tool Name</span><span class="arrow">+</span><span class="node">Description</span><span class="arrow">+</span><span class="node">Schema</span><span class="arrow">→</span><span class="node">Claude decides</span><span class="arrow">→</span><span class="node">Tool call</span>
+  </div>
+
+  <h2>Example: get_weather</h2>
+  <div class="code-wrap"><pre><code>{
+  "name": "get_weather",
+  "description": "Get the current weather for a specified city.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "city": {
+        "type": "string",
+        "description": "City name, such as Delhi or Mumbai."
+      }
+    },
+    "required": ["city"]
+  }
+}</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Bad vs good description</h2>
+  <div class="grid2">
+    <div class="card"><span class="badge" style="background:#fbe6e0;color:#a3402b">Vague</span><p style="margin-top:8px">"Get weather."</p></div>
+    <div class="card"><span class="badge">Clear</span><p style="margin-top:8px">"Get the current weather for a specified city, including temperature, precipitation probability, and conditions. Use when the user asks about weather, rain, temperature, or weather protection."</p></div>
+  </div>
+
+  <h2>Parameter schema — bad vs better</h2>
+  <div class="code-wrap"><pre><code>// Bad
+{ "name": "search", "description": "Search something.",
+  "inputSchema": { "type": "object" } }
+
+// Better
+{
+  "name": "search_customer",
+  "description": "Search the customer database using customer ID, email, or name.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "customer_id": { "type": "string", "description": "Unique customer identifier." },
+      "email": { "type": "string", "description": "Customer email address." },
+      "name": { "type": "string", "description": "Customer's full or partial name." }
+    }
+  }
+}</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <h2>Build it via Claude Code</h2>
+  <div class="code-wrap"><pre><code>Create an MCP server that exposes a tool called search_customer.
+
+Tool requirements:
+Name: search_customer
+Description: Search the customer database using customer ID, email address, or customer name.
+Parameters:
+- customer_id: optional string
+- email: optional string
+- name: optional string
+
+Validate input and return structured customer information.
+Follow MCP tool design best practices. Include clear descriptions and schemas.
+Create the complete project structure and explain how to connect this MCP server to Claude Code.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+  <div class="callout">Good design: specific name → clear description → precise parameters → strong parameter descriptions → structured output. Avoid <code>tool1</code>, <code>tool2</code> with descriptions like "Does something."</div>
+  `
+}
+];
+
+let current = 0;
+
+function render(){
+  const navList = document.getElementById('navList');
+  const panels = document.getElementById('panels');
+  navList.innerHTML = '';
+  panels.innerHTML = '';
+  sections.forEach((s,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (i===current?' active':'');
+    btn.innerHTML = `<span class="num">${s.num}</span> ${s.title}`;
+    btn.onclick = ()=>go(i);
+    navList.appendChild(btn);
+
+    const panel = document.createElement('div');
+    panel.className = 'panel' + (i===current?' active':'');
+    panel.id = 'panel-'+s.id;
+    panel.innerHTML = `<div class="kicker">${s.kicker}</div><h1>${s.title}</h1><div class="lead">${s.lead}</div>${s.html}`;
+    panels.appendChild(panel);
+  });
+  updateFooter();
+}
+
+function go(i){
+  if(i<0 || i>=sections.length) return;
+  current = i;
+  document.querySelectorAll('.nav-btn').forEach((b,idx)=>b.classList.toggle('active', idx===current));
+  document.querySelectorAll('.panel').forEach((p,idx)=>p.classList.toggle('active', idx===current));
+  updateFooter();
+  document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateFooter(){
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===sections.length-1;
+  document.getElementById('nextBtn').textContent = current===sections.length-1 ? 'End →' : 'Next →';
+  document.getElementById('progressLabel').textContent = (current+1)+' / '+sections.length;
+  document.getElementById('progressFill').style.width = ((current+1)/sections.length*100)+'%';
+}
+
+function copyCode(btn){
+  const code = btn.previousElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(()=>{
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},1200);
+  });
+}
+
+render();
+</script>
+</body>
+</html>

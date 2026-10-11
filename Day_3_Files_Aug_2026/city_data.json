@@ -1,0 +1,10 @@
+{
+  "Delhi": {"temp_c": 34, "condition": "Sunny", "humidity": 41},
+  "Mumbai": {"temp_c": 29, "condition": "Humid", "humidity": 78},
+  "Bengaluru": {"temp_c": 24, "condition": "Cloudy", "humidity": 60},
+  "Hyderabad": {"temp_c": 30, "condition": "Clear", "humidity": 45},
+  "Chennai": {"temp_c": 33, "condition": "Hot", "humidity": 70},
+  "Kolkata": {"temp_c": 31, "condition": "Partly Cloudy", "humidity": 65},
+  "Pune": {"temp_c": 27, "condition": "Pleasant", "humidity": 50},
+  "Jaipur": {"temp_c": 36, "condition": "Sunny", "humidity": 30}
+}

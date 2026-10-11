@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP + Claude Enterprise Lab Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F5F8;
+    --surface:#FFFFFF;
+    --surface-2:#F8F9FB;
+    --border:#E1E5EC;
+    --ink:#12192B;
+    --ink-soft:#525C72;
+    --ink-faint:#8A93A6;
+    --accent:#2454C7;
+    --accent-ink:#173A93;
+    --accent-soft:#EAF0FE;
+    --ok:#16794F;
+    --ok-soft:#E7F6EE;
+    --warn:#B4530A;
+    --warn-soft:#FDEFE2;
+    --radius:10px;
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+    --display:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent-soft);color:var(--accent-ink);}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:280px;
+    flex:none;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    height:100vh;
+    position:sticky;
+    top:0;
+    overflow-y:auto;
+    padding:22px 14px 40px;
+  }
+  .brand{
+    padding:4px 10px 18px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:14px;
+  }
+  .brand .tag{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    background:var(--accent-soft);
+    display:inline-block;
+    padding:3px 7px;
+    border-radius:5px;
+    margin-bottom:9px;
+  }
+  .brand h1{
+    font-family:var(--display);
+    font-size:17.5px;
+    line-height:1.28;
+    margin:0 0 4px;
+    font-weight:700;
+    letter-spacing:-.01em;
+  }
+  .brand p{
+    margin:0;
+    font-size:12.2px;
+    color:var(--ink-soft);
+    line-height:1.5;
+  }
+  .navgroup{margin-bottom:6px;}
+  .navgroup-label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    padding:14px 10px 6px;
+  }
+  .navitem{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    padding:8px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    font-family:var(--body);
+    font-size:13.3px;
+    color:var(--ink-soft);
+    line-height:1.3;
+  }
+  .navitem:hover{background:var(--surface-2);color:var(--ink);}
+  .navitem.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600;}
+  .navitem .idx{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    width:20px;
+    flex:none;
+  }
+  .navitem.active .idx{color:var(--accent);}
+  .dot{width:7px;height:7px;border-radius:50%;flex:none;}
+
+  /* ---------- Main ---------- */
+  main{
+    flex:1;
+    min-width:0;
+    padding:40px 52px 90px;
+    max-width:920px;
+  }
+  .panel{display:none;}
+  .panel.active{display:block; animation:rise .28s ease;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  h2.title{
+    font-family:var(--display);
+    font-size:32px;
+    font-weight:700;
+    letter-spacing:-.015em;
+    margin:0 0 6px;
+    line-height:1.15;
+  }
+  .subtitle{color:var(--ink-soft);font-size:15px;margin:0 0 26px;max-width:640px;line-height:1.55;}
+
+  .badgerow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
+  .badge{
+    font-family:var(--mono);
+    font-size:11px;
+    padding:5px 10px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    color:var(--ink-soft);
+    background:var(--surface-2);
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    margin-bottom:18px;
+  }
+  .card h3{
+    font-family:var(--display);
+    font-size:14.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin:0 0 12px;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card h3 .num{color:var(--accent);}
+  .card p{margin:0 0 8px;font-size:14.3px;line-height:1.62;color:var(--ink-soft);}
+  .card ul{margin:0;padding-left:0;list-style:none;}
+  .card ul li{
+    font-size:14px;
+    color:var(--ink-soft);
+    line-height:1.55;
+    padding:6px 0 6px 22px;
+    position:relative;
+    border-bottom:1px dashed var(--border);
+  }
+  .card ul li:last-child{border-bottom:none;}
+  .card ul li::before{
+    content:"";
+    position:absolute;
+    left:2px;
+    top:14px;
+    width:6px;height:6px;
+    border-radius:1px;
+    background:var(--accent);
+    transform:rotate(45deg);
+  }
+
+  pre{
+    background:#0F1729;
+    color:#DCE4F5;
+    font-family:var(--mono);
+    font-size:12.6px;
+    line-height:1.65;
+    padding:18px 20px;
+    border-radius:8px;
+    overflow-x:auto;
+    margin:0 0 18px;
+    border:1px solid #1E2A45;
+  }
+  pre .c1{color:#7DA6F5;}
+  code.inline{
+    font-family:var(--mono);
+    background:var(--accent-soft);
+    color:var(--accent-ink);
+    padding:1px 6px;
+    border-radius:4px;
+    font-size:12.6px;
+  }
+
+  .deliverable{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    background:var(--ok-soft);
+    border:1px solid #BFE6D3;
+    border-radius:var(--radius);
+    padding:14px 18px;
+    margin-bottom:6px;
+  }
+  .deliverable .mk{
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ok);
+    font-weight:600;
+    flex:none;
+    padding-top:1px;
+  }
+  .deliverable p{margin:0;color:#0E5638;font-size:13.6px;line-height:1.5;}
+
+  .note{
+    display:flex;
+    gap:12px;
+    background:var(--warn-soft);
+    border:1px solid #F3D2A8;
+    border-radius:var(--radius);
+    padding:14px 18px;
+    margin-bottom:18px;
+  }
+  .note .mk{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--warn);font-weight:600;flex:none;}
+  .note p{margin:0;color:#7A3B05;font-size:13.6px;line-height:1.5;}
+
+  .steprow{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:6px 0 26px;}
+  .step{
+    font-family:var(--mono);
+    font-size:12px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    padding:8px 13px;
+    border-radius:7px;
+    color:var(--ink);
+  }
+  .arrow{color:var(--ink-faint);font-size:15px;padding:0 8px;}
+
+  /* Overview / progression table */
+  table{width:100%;border-collapse:collapse;font-size:13.2px;}
+  th{
+    text-align:left;
+    font-family:var(--mono);
+    font-size:10.8px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--ink-soft);}
+  tr:last-child td{border-bottom:none;}
+  td.labno{font-family:var(--mono);color:var(--ink);}
+  .teamdot{display:inline-flex;align-items:center;gap:7px;}
+
+  .prereqgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+  .prereqgrid div{
+    font-size:13px;color:var(--ink-soft);
+    padding:8px 12px;background:var(--surface-2);
+    border-radius:7px;border:1px solid var(--border);
+  }
+  @media(max-width:640px){.prereqgrid{grid-template-columns:1fr;}}
+
+  footer.pagefoot{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:34px;padding-top:18px;border-top:1px solid var(--border);
+  }
+  .navbtn{
+    font-family:var(--mono);font-size:12px;color:var(--ink-soft);
+    background:var(--surface-2);border:1px solid var(--border);
+    padding:9px 16px;border-radius:7px;cursor:pointer;
+  }
+  .navbtn:hover{color:var(--accent-ink);border-color:var(--accent);}
+
+  .archgrid{display:flex;flex-direction:column;gap:10px;align-items:center;margin:24px 0;}
+  .archnode{
+    font-family:var(--mono);font-size:12.5px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:8px;padding:10px 22px;min-width:220px;text-align:center;
+  }
+  .archnode.hi{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft);font-weight:600;}
+  .archdown{color:var(--ink-faint);font-size:15px;}
+  .archrow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+
+  @media(max-width:880px){
+    body{flex-direction:column;}
+    .sidebar{position:relative;width:100%;height:auto;max-height:340px;}
+    main{padding:28px 20px 60px;max-width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="brand">
+    <span class="tag">Enterprise Training</span>
+    <h1>MCP + Claude AI<br>Lab Series</h1>
+    <p>15 hands-on labs · Dev, UI/UX, BA, QA, Infra, Ops, HR, Sales, Management</p>
+  </div>
+
+  <div class="navgroup">
+    <div class="navgroup-label">Start Here</div>
+    <button class="navitem active" data-panel="overview"><span class="idx">—</span>Overview</button>
+    <button class="navitem" data-panel="setup"><span class="idx">—</span>Environment Setup</button>
+  </div>
+
+  <div class="navgroup" id="labnav">
+    <div class="navgroup-label">Labs</div>
+  </div>
+
+  <div class="navgroup">
+    <div class="navgroup-label">Reference</div>
+    <button class="navitem" data-panel="progression"><span class="idx">—</span>Progression Table</button>
+    <button class="navitem" data-panel="architecture"><span class="idx">—</span>Training Architecture</button>
+  </div>
+</nav>
+
+<main id="main">
+
+  <!-- OVERVIEW -->
+  <section class="panel active" id="panel-overview">
+    <div class="eyebrow">◆ Program overview</div>
+    <h2 class="title">15 Hands-On MCP + Claude AI Labs</h2>
+    <p class="subtitle">A practical lab structure for a mixed corporate audience — Development, UI/UX, Business Analysis, QA, Infrastructure, Operations, HR, Sales and Management — built on Claude Code, the Claude API, and MCP servers.</p>
+
+    <div class="card">
+      <h3>What participants learn, progressively</h3>
+      <ul>
+        <li>Connect — attach an MCP server to Claude Code or the API</li>
+        <li>Authenticate — securely provide credentials via environment variables</li>
+        <li>Discover tools — explore what an MCP server exposes</li>
+        <li>Prompt — instruct Claude to use those tools toward a business outcome</li>
+        <li>Execute — run real, scoped actions against live systems</li>
+        <li>Validate — check outputs before they're trusted</li>
+        <li>Govern — require human approval before destructive actions</li>
+        <li>Build — author a custom MCP server from scratch</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>How the labs are organized</h3>
+      <p>Labs 1–3 build MCP fundamentals (GitHub, Figma, and writing your own server). Labs 4–12 apply Claude across specific business functions. Labs 13–15 combine multiple MCP servers into automated, governed, end-to-end workflows.</p>
+    </div>
+
+    <div class="note">
+      <span class="mk">Note</span>
+      <p>Store all API keys and tokens as environment variables — never inline in prompts or source code.</p>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="panel" id="panel-setup">
+    <div class="eyebrow">◆ Before lab 1</div>
+    <h2 class="title">Common Lab Environment</h2>
+    <p class="subtitle">Every participant needs the following installed and accessible before labs begin.</p>
+
+    <div class="prereqgrid">
+      <div>Claude account</div>
+      <div>Claude Code installed</div>
+      <div>Claude API key</div>
+      <div>Python 3.11+</div>
+      <div>VS Code</div>
+      <div>GitHub account</div>
+      <div>Figma account</div>
+      <div>Node.js and npm</div>
+      <div>Git</div>
+      <div>Internet access</div>
+      <div>API keys/tokens for selected services</div>
+      <div>Dedicated training GitHub repository</div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3>Store credentials as environment variables</h3>
+      <p>macOS / Linux</p>
+      <pre>export ANTHROPIC_API_KEY="your-api-key"
+export GITHUB_TOKEN="your-github-token"</pre>
+      <p>Windows PowerShell</p>
+      <pre>$env:ANTHROPIC_API_KEY="your-api-key"
+$env:GITHUB_TOKEN="your-github-token"</pre>
+    </div>
+
+    <div class="note">
+      <span class="mk">Reference</span>
+      <p>Claude Code MCP setup (local &amp; remote HTTP servers): code.claude.com/docs/en/mcp &nbsp;·&nbsp; Figma MCP server: help.figma.com — "Guide to the Figma MCP server"</p>
+    </div>
+  </section>
+
+  <!-- LAB PANELS (generated) -->
+  <div id="labpanels"></div>
+
+  <!-- PROGRESSION -->
+  <section class="panel" id="panel-progression">
+    <div class="eyebrow">◆ Reference</div>
+    <h2 class="title">Recommended 15-Lab Progression</h2>
+    <p class="subtitle">Map of team, core technology, and business output for each lab.</p>
+    <div class="card">
+      <table id="progtable"></table>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="panel" id="panel-architecture">
+    <div class="eyebrow">◆ Reference</div>
+    <h2 class="title">Suggested Training Architecture</h2>
+    <p class="subtitle">How Claude, the MCP client layer, and enterprise tools connect across the lab series.</p>
+
+    <div class="card">
+      <div class="archgrid">
+        <div class="archnode hi">CLAUDE</div>
+        <div class="archdown">↓</div>
+        <div class="archnode">Claude API / Claude Code</div>
+        <div class="archdown">↓</div>
+        <div class="archnode">MCP Client Layer</div>
+        <div class="archdown">↓</div>
+        <div class="archrow">
+          <div class="archnode">GitHub<br><span style="color:var(--ink-faint)">Source</span></div>
+          <div class="archnode">Figma<br><span style="color:var(--ink-faint)">Design</span></div>
+          <div class="archnode">Python MCP<br><span style="color:var(--ink-faint)">Custom Tools</span></div>
+        </div>
+        <div class="archdown">↓</div>
+        <div class="archnode">Enterprise Tools</div>
+        <div class="archdown">↓</div>
+        <div class="archrow">
+          <div class="archnode">CRM</div>
+          <div class="archnode">Database</div>
+          <div class="archnode">QA</div>
+          <div class="archnode">Cloud</div>
+          <div class="archnode">ITSM</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Lab 13 — Automated DevOps CI/CD workflow</h3>
+      <div class="steprow">
+        <span class="step">Business Requirement</span><span class="arrow">→</span>
+        <span class="step">GitHub Issue</span><span class="arrow">→</span>
+        <span class="step">Claude</span><span class="arrow">→</span>
+        <span class="step">Code Gen</span><span class="arrow">→</span>
+        <span class="step">Test Gen</span><span class="arrow">→</span>
+        <span class="step">Test Run</span><span class="arrow">→</span>
+        <span class="step">Code Review</span><span class="arrow">→</span>
+        <span class="step">Pull Request</span><span class="arrow">→</span>
+        <span class="step">Release Notes</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Lab 15 — End-to-end enterprise workflow</h3>
+      <div class="archgrid">
+        <div class="archnode">Figma</div><div class="archdown">↓</div>
+        <div class="archnode">Business Analysis</div><div class="archdown">↓</div>
+        <div class="archnode">GitHub</div><div class="archdown">↓</div>
+        <div class="archnode hi">Claude</div><div class="archdown">↓</div>
+        <div class="archnode">QA</div><div class="archdown">↓</div>
+        <div class="archnode">Infrastructure</div><div class="archdown">↓</div>
+        <div class="archnode">DevOps</div><div class="archdown">↓</div>
+        <div class="archnode">Operations</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const TEAM_COLORS = {
+  "Developers":"#2454C7","UI/UX":"#8B5CF6","Business Analysts":"#7C3AED",
+  "QA":"#16A34A","Infrastructure":"#EA580C","IT Operations":"#0D9488",
+  "Data/Analytics":"#0891B2","Integration":"#2454C7","All Teams":"#334155",
+  "Sales":"#D97706","HR":"#DB2777","DevOps":"#EA580C","Operations":"#0D9488",
+  "Enterprise":"#12192B"
+};
+
+const labs = [
+{n:1,team:"Developers",tech:"GitHub MCP",title:"GitHub MCP for Software Development",
+ objective:"Connect GitHub to Claude through MCP and allow Claude to work with repositories, issues and pull requests.",
+ scenario:"A development team wants Claude to analyse an existing application repository and help manage development tasks.",
+ activities:["Configure GitHub MCP","Authenticate GitHub","Connect Claude Code to GitHub","Explore repositories","Read issues","Analyse an existing codebase","Create a development task","Review a pull request","Generate code recommendations"],
+ prompt:`Connect to the GitHub repository.
+
+Analyse the project structure.
+
+Identify:
+1. Main application components
+2. Technology stack
+3. Potential technical debt
+4. Security concerns
+5. Areas requiring automated testing
+
+Create a development improvement plan.`,
+ note:null,
+ deliverable:"GitHub analysis report and improvement backlog."},
+
+{n:2,team:"UI/UX",tech:"Figma MCP",title:"Figma MCP and Netflix-Style Streaming UI",
+ objective:"Connect Figma MCP and use Claude to create a streaming-platform interface inspired by common OTT design patterns.",
+ scenario:"A product team wants to rapidly prototype a video-streaming application.",
+ activities:["Connect Figma MCP","Authenticate Figma","Create a new design","Create homepage","Create navigation","Create hero section","Create movie cards","Create category sections","Create responsive layout","Generate frontend code"],
+ prompt:`Create an original OTT streaming platform interface.
+
+Create:
+- Header
+- Search
+- Hero banner
+- Continue Watching
+- Trending Now
+- Recommended
+- Categories
+- Movie detail card
+
+Use a modern dark streaming UI.
+
+Do not use Netflix logos, copyrighted images or proprietary assets.`,
+ note:"Use an original streaming-service design rather than copying Netflix's proprietary assets, logos or exact branded interface.",
+ deliverable:"Figma OTT prototype + generated frontend code."},
+
+{n:3,team:"Developers",tech:"Python MCP",title:"Build Your Own MCP Server Using Python",
+ objective:"Understand how MCP tools are created rather than only consuming existing MCP servers.",
+ scenario:"An organisation wants an internal employee-information MCP server.",
+ activities:["Understand MCP architecture","Install Python MCP SDK","Create an MCP server","Create a custom tool","Define tool parameters","Return structured results","Connect server to Claude Code","Test the tool"],
+ prompt:`Create a Python MCP server for an HR system.
+
+Create tools for:
+
+1. Search employee
+2. Get employee details
+3. Get department information
+4. Get leave balance
+
+Return structured JSON responses.`,
+ note:null,
+ deliverable:"Working Python MCP server.",
+ extra:{label:"Example tool functions",code:`get_employee()
+get_department()
+get_leave_balance()
+search_employee()`}},
+
+{n:4,team:"Business Analysts",tech:"Claude API",title:"Business Analyst MCP Lab",
+ objective:"Use Claude to generate a complete Business Requirements Document.",
+ scenario:"A retail company wants to implement an AI-powered sales analytics platform.",
+ activities:["Provide business problem","Identify stakeholders","Define business objectives","Generate functional requirements","Generate non-functional requirements","Define assumptions","Define constraints","Create process flow","Create acceptance criteria","Generate BRD"],
+ prompt:`Act as a senior business analyst.
+
+Business:
+A retail organisation operates 250 stores.
+
+Problem:
+Management receives sales information from multiple systems
+and cannot easily identify declining products, stores or regions.
+
+Create a complete BRD containing:
+
+Business problem
+Objectives
+Stakeholders
+Current process
+Future process
+Functional requirements
+Non-functional requirements
+KPIs
+Data requirements
+Integration requirements
+Security requirements
+Assumptions
+Constraints
+Acceptance criteria
+Risks`,
+ note:null,
+ deliverable:"Professional BRD."},
+
+{n:5,team:"QA",tech:"Claude API",title:"QA Test Case Generation Using Claude",
+ objective:"Convert requirements into comprehensive test cases.",
+ scenario:"QA receives the BRD from Lab 4.",
+ activities:["Import BRD","Identify requirements","Generate positive test cases","Generate negative test cases","Generate boundary cases","Generate integration cases","Generate security cases","Generate regression suite","Generate test data"],
+ prompt:`Analyse this BRD.
+
+Create a complete QA test suite.
+
+For every requirement generate:
+
+Test Case ID
+Requirement ID
+Scenario
+Precondition
+Test Data
+Steps
+Expected Result
+Priority
+Severity
+Test Type
+
+Include positive, negative, boundary,
+integration and regression scenarios.`,
+ note:null,
+ deliverable:"Excel-ready QA test suite."},
+
+{n:6,team:"Infrastructure",tech:"Claude + IaC",title:"Infrastructure Engineering from Prompt",
+ objective:"Use Claude to convert infrastructure requirements into deployment artefacts.",
+ scenario:"An organisation needs a three-tier application deployed on Azure.",
+ activities:["Define infrastructure requirements","Generate architecture","Generate Terraform","Generate Dockerfile","Generate Kubernetes manifests","Generate networking configuration","Generate monitoring configuration","Validate configuration","Identify security risks"],
+ prompt:`Design an Azure architecture for a three-tier application.
+
+Requirements:
+
+Frontend
+Backend API
+PostgreSQL database
+Private networking
+Load balancer
+Monitoring
+Logging
+High availability
+
+Generate:
+
+Architecture
+Terraform
+Docker configuration
+Kubernetes manifests
+Security controls
+Deployment steps`,
+ note:null,
+ deliverable:"Infrastructure-as-Code repository."},
+
+{n:7,team:"IT Operations",tech:"MCP",title:"IT Operations Incident Management MCP",
+ objective:"Connect Claude to operational data and automate incident analysis.",
+ scenario:"An IT operations team receives hundreds of incidents every day.",
+ activities:["Connect incident-management MCP","Retrieve incidents","Classify incidents","Identify priority","Analyse recurring issues","Generate incident summaries","Suggest remediation","Create escalation recommendations"],
+ prompt:`Analyse today's incidents.
+
+Group them by:
+
+Application
+Infrastructure
+Network
+Database
+Security
+
+Identify recurring incidents.
+
+For each major incident provide:
+
+Root-cause hypothesis
+Business impact
+Priority
+Recommended action
+Escalation requirement`,
+ note:null,
+ deliverable:"Daily operations intelligence report."},
+
+{n:8,team:"Data/Analytics",tech:"Database MCP",title:"Database MCP for Data Analysis",
+ objective:"Allow Claude to interact with a database through MCP.",
+ scenario:"Business analysts need answers from a sales database without manually writing every SQL query.",
+ activities:["Connect database MCP","Explore schema","Identify tables","Generate SQL","Execute read-only queries","Analyse results","Identify anomalies","Generate management insights"],
+ prompt:`Analyse the sales database.
+
+Find:
+
+Top 10 customers
+Top 10 products
+Monthly revenue
+Regional performance
+Declining products
+Customers with declining purchases
+
+Do not modify any database records.
+
+Explain every SQL query before execution.`,
+ note:null,
+ deliverable:"Business analytics report."},
+
+{n:9,team:"Integration",tech:"REST + MCP",title:"API Integration MCP Lab",
+ objective:"Build an MCP integration that consumes an external REST API.",
+ scenario:"A sales organisation wants Claude to retrieve customer information from its CRM API.",
+ activities:["Create API client","Configure authentication","Define MCP tool","Call REST endpoint","Validate response","Convert response into structured data","Connect to Claude","Generate customer insights"],
+ prompt:null,
+ note:null,
+ deliverable:"CRM MCP server.",
+ extra:{label:"Sample tools",code:`get_customer()
+search_customer()
+get_customer_orders()
+get_customer_interactions()`}},
+
+{n:10,team:"All Teams",tech:"Knowledge MCP",title:"Document Intelligence and Knowledge Assistant",
+ objective:"Create an internal knowledge assistant using Claude and MCP.",
+ scenario:"Employees need answers from HR policies, SOPs and technical documentation.",
+ activities:["Prepare documents","Create knowledge structure","Connect document source","Retrieve relevant information","Generate answers","Include source references","Handle unknown questions","Test hallucination resistance"],
+ prompt:`Answer the employee's question using only
+the connected company documentation.
+
+If the information is unavailable,
+say that it is not available.
+
+Do not invent company policy.
+
+Provide the source document and section
+where possible.`,
+ note:null,
+ deliverable:"Internal knowledge assistant."},
+
+{n:11,team:"Sales",tech:"CRM MCP",title:"Sales Intelligence MCP",
+ objective:"Build an AI sales assistant connected to customer and sales information.",
+ scenario:"B2B sales managers want AI-assisted account intelligence.",
+ activities:["Connect CRM/customer data","Analyse customer history","Identify opportunities","Analyse purchase trends","Generate account plans","Generate meeting preparation","Generate follow-up emails","Identify cross-selling opportunities"],
+ prompt:`Prepare an account intelligence report.
+
+Include:
+
+Customer profile
+Current business
+Purchase history
+Revenue trend
+Potential opportunities
+Cross-sell opportunities
+Risks
+Competitor indicators
+Next-best action
+Meeting questions`,
+ note:null,
+ deliverable:"Customer Account Intelligence Report."},
+
+{n:12,team:"HR",tech:"Claude API",title:"HR Recruitment MCP",
+ objective:"Build an AI recruitment assistant.",
+ scenario:"HR receives hundreds of resumes for technical positions.",
+ activities:["Connect candidate repository","Parse resumes","Compare against JD","Calculate matching score","Identify skill gaps","Generate interview questions","Create candidate shortlist","Generate recruiter summary"],
+ prompt:`Compare each candidate against this job description.
+
+Evaluate:
+
+Technical skills
+Experience
+Education
+Certifications
+Relevant projects
+Domain experience
+
+Generate a transparent scoring matrix.
+
+Do not make decisions using protected
+personal characteristics.`,
+ note:null,
+ deliverable:"Candidate evaluation dashboard/report."},
+
+{n:13,team:"DevOps",tech:"GitHub MCP",title:"Automated DevOps CI/CD Agent",
+ objective:"Combine GitHub MCP with Claude to automate software delivery activities.",
+ scenario:"A DevOps team wants an AI-assisted pull-request workflow.",
+ activities:["Read GitHub issue","Analyse code","Generate implementation","Generate tests","Run tests","Review changes","Generate commit","Create pull request","Review PR","Generate release notes"],
+ prompt:null,
+ note:null,
+ deliverable:"End-to-end AI-assisted development workflow.",
+ workflow:["Business Requirement","GitHub Issue","Claude","Code Generation","Test Generation","Test Execution","Code Review","Pull Request","Release Notes"]},
+
+{n:14,team:"Operations",tech:"MCP + Claude",title:"Operations Automation Agent",
+ objective:"Build an AI agent for repetitive operational activities.",
+ scenario:"Operations teams manually prepare daily reports from multiple systems.",
+ activities:["Retrieve operational data","Validate data","Identify exceptions","Generate daily report","Create escalation list","Generate management summary","Produce recommended actions"],
+ prompt:`Act as an operations intelligence agent.
+
+Every morning:
+
+1. Retrieve operational metrics
+2. Check data quality
+3. Identify exceptions
+4. Compare against thresholds
+5. Classify incidents
+6. Generate management summary
+7. Generate action items
+8. Identify items requiring human approval
+
+Never execute destructive actions automatically.`,
+ note:null,
+ deliverable:"AI Operations Control Report."},
+
+{n:15,team:"Enterprise",tech:"Multiple MCPs",title:"End-to-End Enterprise MCP Agent",
+ objective:"Combine multiple MCP servers into one enterprise workflow, moving a new business application from requirement to production.",
+ scenario:"A new business application needs to move from requirement to production.",
+ activities:["Receive business requirement","Generate BRD","Generate UI design","Create development task","Generate code","Generate test cases","Execute tests","Generate infrastructure","Create deployment configuration","Generate deployment documentation","Create operations runbook"],
+ prompt:`Act as an enterprise AI engineering agent.
+
+A business requirement has been provided.
+
+Perform the following workflow:
+
+1. Analyse the requirement
+2. Identify missing information
+3. Create BRD
+4. Create user stories
+5. Create acceptance criteria
+6. Create UI design requirements
+7. Create development tasks
+8. Generate implementation
+9. Generate automated tests
+10. Review the implementation
+11. Generate infrastructure configuration
+12. Generate deployment plan
+13. Generate monitoring requirements
+14. Generate operations runbook
+
+Use connected MCP tools where appropriate.
+
+Before any destructive action:
+STOP and request human approval.
+
+Maintain an audit trail of:
+- Tool used
+- Action performed
+- Input
+- Output
+- Decision
+- Approval requirement`,
+ note:null,
+ deliverable:"Complete enterprise AI workflow."}
+];
+
+const progressionOutputs = {
+  1:"Code/PR analysis",2:"OTT prototype",3:"Custom MCP server",4:"BRD",5:"Test suite",
+  6:"Terraform/Kubernetes",7:"Incident intelligence",8:"Analytics report",9:"API assistant",
+  10:"Enterprise assistant",11:"Account intelligence",12:"Recruitment assistant",
+  13:"CI/CD workflow",14:"Operations automation",15:"End-to-end AI agent"
+};
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// Build sidebar lab nav
+const labnav = document.getElementById('labnav');
+labs.forEach(l=>{
+  const btn = document.createElement('button');
+  btn.className = 'navitem';
+  btn.dataset.panel = 'lab'+l.n;
+  const color = TEAM_COLORS[l.team] || '#525C72';
+  btn.innerHTML = `<span class="idx">${String(l.n).padStart(2,'0')}</span><span class="dot" style="background:${color}"></span>${l.title}`;
+  labnav.appendChild(btn);
+});
+
+// Build lab panels
+const labpanels = document.getElementById('labpanels');
+labs.forEach(l=>{
+  const color = TEAM_COLORS[l.team] || '#525C72';
+  const sec = document.createElement('section');
+  sec.className = 'panel';
+  sec.id = 'panel-lab'+l.n;
+
+  let html = `
+    <div class="eyebrow">◆ Lab ${l.n} of 15</div>
+    <h2 class="title">${esc(l.title)}</h2>
+    <p class="subtitle">${esc(l.objective)}</p>
+    <div class="badgerow">
+      <span class="badge" style="color:${color};border-color:${color}44;background:${color}14">${esc(l.team)}</span>
+      <span class="badge">${esc(l.tech)}</span>
+    </div>
+
+    <div class="card">
+      <h3><span class="num">01</span>Business Scenario</h3>
+      <p>${esc(l.scenario)}</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="num">02</span>Activities</h3>
+      <ul>${l.activities.map(a=>`<li>${esc(a)}</li>`).join('')}</ul>
+    </div>`;
+
+  if(l.note){
+    html += `<div class="note"><span class="mk">Important</span><p>${esc(l.note)}</p></div>`;
+  }
+
+  if(l.extra){
+    html += `<div class="card"><h3><span class="num">03</span>${esc(l.extra.label)}</h3><pre>${esc(l.extra.code)}</pre></div>`;
+  }
+
+  if(l.workflow){
+    html += `<div class="card"><h3><span class="num">03</span>Workflow</h3><div class="steprow">${l.workflow.map((s,i)=>`<span class="step">${esc(s)}</span>${i<l.workflow.length-1?'<span class="arrow">→</span>':''}`).join('')}</div></div>`;
+  }
+
+  if(l.prompt){
+    html += `<div class="card"><h3><span class="num">${l.extra||l.workflow?'04':'03'}</span>Sample Prompt</h3><pre>${esc(l.prompt)}</pre></div>`;
+  }
+
+  html += `
+    <div class="deliverable">
+      <span class="mk">Deliverable</span>
+      <p>${esc(l.deliverable)}</p>
+    </div>
+
+    <footer class="pagefoot">
+      <button class="navbtn" data-goto="${l.n>1?'lab'+(l.n-1):'setup'}">← Previous</button>
+      <button class="navbtn" data-goto="${l.n<15?'lab'+(l.n+1):'progression'}">Next →</button>
+    </footer>`;
+
+  sec.innerHTML = html;
+  labpanels.appendChild(sec);
+});
+
+// Build progression table
+const progtable = document.getElementById('progtable');
+let thead = '<tr><th>Lab</th><th>Team</th><th>Main Technology</th><th>Business Output</th></tr>';
+let rows = labs.map(l=>{
+  const color = TEAM_COLORS[l.team] || '#525C72';
+  return `<tr><td class="labno">${String(l.n).padStart(2,'0')}</td><td><span class="teamdot"><span class="dot" style="background:${color}"></span>${esc(l.team)}</span></td><td>${esc(l.tech)}</td><td>${esc(progressionOutputs[l.n])}</td></tr>`;
+}).join('');
+progtable.innerHTML = thead + rows;
+
+// Tab switching
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.navitem').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById('panel-'+id);
+  if(target) target.classList.add('active');
+  const navbtn = document.querySelector(`.navitem[data-panel="${id}"]`);
+  if(navbtn) navbtn.classList.add('active');
+  document.getElementById('main').scrollTop = 0;
+  window.scrollTo(0,0);
+}
+
+document.addEventListener('click', e=>{
+  const nav = e.target.closest('.navitem');
+  if(nav){ showPanel(nav.dataset.panel); return; }
+  const gt = e.target.closest('[data-goto]');
+  if(gt){ showPanel(gt.dataset.goto); }
+});
+</script>
+</body>
+</html>

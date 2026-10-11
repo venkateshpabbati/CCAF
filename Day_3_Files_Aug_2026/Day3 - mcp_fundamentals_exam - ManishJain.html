@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Fundamentals Certification Exam</title>
+<style>
+  :root{
+    --navy:#161A45; --navy2:#232a66; --amber:#D9A441; --amber-dark:#9c7220;
+    --bg:#F6F5F0; --card:#FFFFFF; --ink:#1F2430; --muted:#6B7280; --line:#E4E2D9;
+    --green:#1D7A4C; --green-bg:#E7F5EC; --red:#B3311C; --red-bg:#FBEAE7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  header{background:var(--navy);color:#fff;padding:22px 24px;}
+  header h1{margin:0;font-size:20px;font-weight:600;letter-spacing:.2px;}
+  header p{margin:4px 0 0;color:#c7c9e6;font-size:13px;}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 16px 60px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px;margin-bottom:16px;}
+  .btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--navy2);}
+  .btn.secondary{background:transparent;color:var(--navy);border:1px solid var(--navy);}
+  .btn.amber{background:var(--amber);color:#3a2a06;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  input[type=text],input[type=email],input[type=password]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;margin-top:6px;}
+  label{font-size:13px;font-weight:600;color:var(--muted);}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab{padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);}
+  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;}
+  .badge.Easy{background:#E7F5EC;color:var(--green);}
+  .badge.Intermediate{background:#FDF2DC;color:var(--amber-dark);}
+  .badge.Difficult{background:var(--red-bg);color:var(--red);}
+  .progress{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 18px;}
+  .progress > div{height:100%;background:var(--amber);}
+  .scenario{font-size:15px;line-height:1.55;margin:12px 0 18px;}
+  .opt{display:block;width:100%;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-bottom:9px;cursor:pointer;font-size:14px;line-height:1.4;}
+  .opt:hover{border-color:var(--navy);}
+  .opt.correct{background:var(--green-bg);border-color:var(--green);}
+  .opt.wrong{background:var(--red-bg);border-color:var(--red);}
+  .explain{margin-top:14px;padding:12px 14px;background:#F4F3EE;border-radius:8px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .row{display:flex;justify-content:space-between;align-items:center;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;}
+  tr.me{background:#FDF2DC;}
+  .stat{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .stat div{flex:1;min-width:120px;background:#F4F3EE;border-radius:8px;padding:14px;text-align:center;}
+  .stat .num{font-size:26px;font-weight:700;color:var(--navy);}
+  .stat .lbl{font-size:12px;color:var(--muted);margin-top:2px;}
+  .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:28px;}
+  .qi{font-size:12px;color:var(--muted);margin-bottom:6px;}
+  a.admin-link{color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;}
+  .err{color:var(--red);font-size:13px;margin-top:6px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>MCP Fundamentals Certification Exam</h1>
+  <p>Claude Architect Certificate · Module 1 of 2 · 25 questions</p>
+</header>
+<div class="wrap" id="app"></div>
+
+<script>
+const EXAM_ID = "mcp_fund_v1";
+const PASS_PERCENT = 70;
+const ADMIN_PASSCODE = "ADMIN2026";
+
+const QUESTIONS = [
+{d:"Easy", s:"A company builds an internal Claude-based assistant that needs to pull data from Slack, Jira, and a file system without writing custom integration code for each service.", q:"Within MCP's architecture, what role does the assistant application itself play?", o:["Host","Server","Resource","Primitive"], c:0, e:"The Host is the AI application (e.g. the assistant) that embeds an MCP client and coordinates connections to one or more MCP servers."},
+{d:"Easy", s:"You are choosing which MCP primitive to expose for an action the model should decide to invoke, such as calling an API or running a calculation.", q:"Which primitive is invoked by the model itself to perform an action?", o:["Resource","Tool","Prompt","Root"], c:1, e:"Tools are model-controlled: the model decides when and how to call them, similar to function calling."},
+{d:"Easy", s:"You need to expose a file's contents to Claude, but the decision of whether to load that content into context should be made by the host application, not the model.", q:"Which primitive fits this read-only, application-controlled use case?", o:["Tool","Resource","Prompt","Sampling"], c:1, e:"Resources expose contextual data that the host application decides when to attach — the model doesn't choose to 'call' a resource the way it calls a tool."},
+{d:"Easy", s:"A server offers a reusable template, such as \"/summarize-ticket\", that a user explicitly selects from a UI menu rather than the model choosing it automatically.", q:"Which primitive is this?", o:["Tool","Resource","Prompt","Root"], c:2, e:"Prompts are user-controlled templates — the user (or host UI) selects them explicitly."},
+{d:"Easy", s:"You're reviewing the wire format MCP uses to structure requests and responses between client and server.", q:"What underlying protocol does MCP use?", o:["REST","JSON-RPC 2.0","GraphQL","SOAP"], c:1, e:"MCP messages are JSON-RPC 2.0 requests, responses, and notifications."},
+{d:"Easy", s:"You're connecting a desktop app to an MCP server that runs as a local subprocess on the same machine (e.g., a filesystem server).", q:"Which transport is most appropriate?", o:["HTTP+SSE","stdio","WebSocket","gRPC"], c:1, e:"stdio is designed for local, same-machine communication where the server runs as a child process."},
+{d:"Easy", s:"You're deploying an MCP server as a remote web service that many different clients will connect to over the internet.", q:"Which transport is appropriate here?", o:["stdio","Streamable HTTP","raw TCP socket","FTP"], c:1, e:"Streamable HTTP (HTTP POST + SSE streaming) is designed for remote, multi-client deployments."},
+{d:"Intermediate", s:"Your MCP server exposes 200 tools. Clients repeatedly run into context-window pressure because the full tool schema list is huge.", q:"Which MCP feature lets clients discover tools incrementally instead of loading everything at once?", o:["Roots","List operations with pagination cursors","Sampling","Prompts"], c:1, e:"tools/list (and other list operations) support cursor-based pagination so clients can page through large catalogs."},
+{d:"Intermediate", s:"A filesystem MCP server needs to know exactly which directories on the user's machine it is allowed to touch, as scoped by the host application, before performing any operation.", q:"Which MCP feature communicates this access boundary?", o:["Roots","Resources","Tools","Sampling"], c:0, e:"Roots let the host tell a server which directories/URIs it's permitted to operate within."},
+{d:"Intermediate", s:"A weather MCP server has no LLM of its own, but one of its tools needs the client's model to turn retrieved data into a natural-language summary.", q:"Which MCP feature lets the server request a completion from the client's LLM?", o:["Sampling","Prompts","Resources","Elicitation"], c:0, e:"Sampling lets a server request that the client's LLM generate a completion, with the client mediating and approving the request."},
+{d:"Intermediate", s:"Before any tool calls can happen, a connecting client and server exchange information about which features each side supports.", q:"What is this exchange called?", o:["OAuth flow","initialize handshake / capability negotiation","Tool registration","Resource subscription"], c:1, e:"The initialize request/response performs capability negotiation at the start of a session."},
+{d:"Intermediate", s:"A server gains a new tool at runtime and wants connected clients to know without having to repeatedly poll.", q:"What MCP mechanism supports this?", o:["Notifications (e.g. notifications/tools/list_changed)","Webhooks","Polling only","Server push email"], c:0, e:"MCP defines notification messages, such as list_changed notifications, for servers to proactively inform clients of state changes."},
+{d:"Intermediate", s:"Mid-task, a tool needs to ask the user a follow-up question — e.g. \"which project should I file this under?\" — before it can safely proceed.", q:"Which newer MCP feature supports this interactive, server-initiated input request?", o:["Elicitation","Sampling","Roots","Prompts"], c:0, e:"Elicitation lets a server request additional structured input from the user via the client, mid-interaction."},
+{d:"Intermediate", s:"A Host application connects to three different MCP servers to give Claude broader capabilities.", q:"How many MCP Client instances does the Host typically maintain?", o:["Exactly one shared client for all servers","One dedicated client instance per connected server (1:1)","Zero — clients are optional","One client per tool, not per server"], c:1, e:"Each server connection gets its own stateful MCP Client instance inside the Host, maintaining a 1:1 relationship."},
+{d:"Intermediate", s:"Your team is debating whether a 'file search' capability should be modeled as a Tool or a Resource. It returns dynamic results based on a model-chosen query and requires arbitrary invocation logic.", q:"What's the correct classification?", o:["Resource","Tool","Prompt","Root"], c:1, e:"Because it's an action the model decides to invoke with parameters and side-effect-like logic, it belongs as a Tool, not a passive Resource."},
+{d:"Intermediate", s:"You want to expose a static company FAQ document that the host app automatically attaches to context when relevant, without the model needing to decide to 'call' anything.", q:"Which primitive fits best?", o:["Tool","Resource","Prompt","Sampling"], c:1, e:"This is application-controlled, passive context — the defining characteristic of a Resource."},
+{d:"Difficult", s:"A security review finds that a connected MCP server's tool description contains hidden instructions attempting to make the model exfiltrate data returned by other tools — a technique known as 'tool poisoning'.", q:"What is the recommended mitigation per MCP security best practice?", o:["Trust all tool descriptions verbatim since they come from the server author","Have the host/client sandbox and validate servers, treat tool descriptions as untrusted input, and require explicit user consent before tool use","Disable JSON-RPC entirely","Switch to stdio transport only, which prevents poisoning"], c:1, e:"MCP's security guidance treats server-supplied text (including tool descriptions) as untrusted, and requires host-level sandboxing plus explicit user consent for tool invocation."},
+{d:"Difficult", s:"Two MCP servers are connected to the same host. One malicious server registers a tool with the same name as a trusted tool from another server, hoping to intercept calls meant for the legitimate one.", q:"This is an example of which class of attack MCP host implementations must guard against?", o:["Tool shadowing / name collision attack","SQL injection","CSRF","Buffer overflow"], c:0, e:"Tool shadowing occurs when a malicious server's tool definition overlaps with or overrides a trusted tool's identity, and hosts must disambiguate/namespace tools to prevent it."},
+{d:"Difficult", s:"An enterprise architect is deciding whether the LLM should have direct, unmediated network access to every connected MCP server, or whether the host application should sit in between every call.", q:"What is the recommended architecture?", o:["The model connects directly to servers with no mediation, for lower latency","The host mediates: it routes all calls through its MCP client, enforces user consent, and logs usage","Skip consent prompts to speed up automation","Servers should call the model directly, bypassing the host"], c:1, e:"The Host is the trust boundary — it should mediate every tool/resource call, enforce consent, and provide auditability rather than letting the model talk to servers unmediated."},
+{d:"Difficult", s:"A tool's JSON schema declares a required 'date' parameter, but the model's call omits it. The server currently crashes and returns a raw HTML error page.", q:"What is the best-practice server behavior instead?", o:["Crash silently with no response","Return a structured JSON-RPC error object with a clear, actionable message the model can use to retry correctly","Ignore the call and do nothing","Return the raw stack trace as the tool result"], c:1, e:"Errors should be returned as structured, actionable JSON-RPC errors so the calling model can self-correct and retry — not opaque crashes."},
+{d:"Difficult", s:"Your team is comparing MCP Resources to a design where all context is instead stuffed into ad-hoc function-calling responses with no standard primitive for passive context.", q:"What is the main architectural advantage MCP Resources provide?", o:["Faster raw inference speed","A standardized, host-controlled way to inject context that's decoupled from the model's own tool-choice decisions","They automatically reduce API cost","They replace the need for Tools entirely"], c:1, e:"Resources standardize how passive context is surfaced and let the host — not the model — decide what's attached, which ad-hoc tool-only designs don't offer."},
+{d:"Difficult", s:"Your product team debates whether MCP Prompts should be auto-triggered by the model whenever it infers relevant user intent, or should remain something the user explicitly selects.", q:"Per MCP's design, how should Prompts be controlled?", o:["Automatically triggered by the model based on inferred intent","Explicitly selected by the user, e.g. via a slash-command or menu UI","Only the server decides, with no user or model involvement","Selected at random to encourage discovery"], c:1, e:"Prompts are the user-controlled primitive by design — they're meant to be explicitly invoked, unlike Tools which are model-controlled."},
+{d:"Difficult", s:"A client is paging through a server's resource list and receives a nextCursor value in the response.", q:"What should the client do with it?", o:["Ignore it and refetch everything from scratch each time","Pass nextCursor in the next list request to fetch the subsequent page","Treat its presence as an error condition","Close the connection immediately"], c:1, e:"nextCursor is used in the following list request to continue pagination from where the previous page left off."},
+{d:"Difficult", s:"An architect needs a transport that supports server-initiated messages — such as progress notifications during a long-running tool call — being pushed to a remote web client.", q:"Which transport supports this streaming, bidirectional-feeling pattern?", o:["Plain HTTP request/response only","Streamable HTTP (HTTP POST plus an SSE stream)","stdio","FTP"], c:1, e:"Streamable HTTP allows the server to stream events (like progress notifications) back over SSE while remaining usable over standard HTTP infrastructure."},
+{d:"Difficult", s:"You need to correctly summarize how MCP's three primitives map to who controls their invocation.", q:"Which statement is correct?", o:["Tools = model-controlled, Resources = application-controlled, Prompts = user-controlled","Tools = user-controlled, Resources = model-controlled, Prompts = application-controlled","All three primitives are model-controlled","All three primitives are user-controlled"], c:0, e:"This is the canonical control mapping: Tools are invoked by the model, Resources are attached by the application, Prompts are selected by the user."}
+];
+
+// ---------- storage helpers ----------
+function sanitize(s){ return (s||"").trim().toLowerCase().replace(/[^a-z0-9_.@-]/g,""); }
+async function saveResult(rec){
+  try{ await window.storage.set(`results:${EXAM_ID}:${rec.pid}`, JSON.stringify(rec), true); }catch(e){ console.error(e); }
+}
+async function loadResult(pid){
+  try{ const r = await window.storage.get(`results:${EXAM_ID}:${pid}`, true); return r? JSON.parse(r.value): null; }catch(e){ return null; }
+}
+async function loadAllResults(){
+  const out=[];
+  try{
+    const l = await window.storage.list(`results:${EXAM_ID}:`, true);
+    if(l && l.keys){
+      for(const k of l.keys){
+        try{ const r = await window.storage.get(k, true); if(r) out.push(JSON.parse(r.value)); }catch(e){}
+      }
+    }
+  }catch(e){ console.error(e); }
+  return out;
+}
+
+// ---------- state ----------
+let state = { pid:null, name:null, email:null, idx:0, answers:[], picked:null, tab:'exam', started:false, startTime:null, adminOK:false };
+const app = document.getElementById('app');
+
+function render(){
+  if(!state.started){ renderStart(); return; }
+  if(state.tab==='exam') renderExam();
+  else if(state.tab==='result') renderResult();
+  else if(state.tab==='leaderboard') renderLeaderboard();
+  else if(state.tab==='admin') renderAdmin();
+}
+
+function renderStart(){
+  app.innerHTML = `
+  <div class="card">
+    <h2 style="margin-top:0">Before you begin</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6">This is a timed, single-attempt-style exam covering MCP's client-server architecture and its three primitives. Enter your details below — your email is used only as your unique participant ID so your score and mistake review stay tied to you. Passing score: ${PASS_PERCENT}%.</p>
+    <label>Full name</label>
+    <input type="text" id="fname" placeholder="Jane Doe">
+    <div style="height:12px"></div>
+    <label>Email (used as your participant ID)</label>
+    <input type="email" id="femail" placeholder="jane@company.com">
+    <div class="err" id="startErr"></div>
+    <div style="height:18px"></div>
+    <button class="btn amber" onclick="beginExam()">Start exam →</button>
+  </div>`;
+}
+
+window.beginExam = function(){
+  const name = document.getElementById('fname').value.trim();
+  const email = document.getElementById('femail').value.trim();
+  if(!name || !email || !email.includes('@')){
+    document.getElementById('startErr').textContent = 'Enter your name and a valid email to continue.';
+    return;
+  }
+  state.name = name; state.email = email; state.pid = sanitize(email) || sanitize(name+Date.now());
+  state.started = true; state.startTime = Date.now(); state.idx=0; state.answers=[]; state.picked=null; state.tab='exam';
+  render();
+};
+
+function renderTabs(active){
+  const tabs=[['exam','Exam'],['result','My result'],['leaderboard','Leaderboard'],['admin','Admin']];
+  return `<div class="tabs">${tabs.map(([k,l])=>`<div class="tab ${k===active?'active':''}" onclick="switchTab('${k}')">${l}</div>`).join('')}</div>`;
+}
+window.switchTab = function(t){ state.tab=t; render(); };
+
+function renderExam(){
+  const total = QUESTIONS.length;
+  if(state.idx >= total){ finishExam(); return; }
+  const q = QUESTIONS[state.idx];
+  const pct = Math.round((state.idx/total)*100);
+  app.innerHTML = `
+  ${renderTabs('exam')}
+  <div class="card">
+    <div class="row"><div class="qi">Question ${state.idx+1} of ${total}</div><span class="badge ${q.d}">${q.d}</span></div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="scenario">${q.s}<br><br><strong>${q.q}</strong></div>
+    <div id="opts">${q.o.map((o,i)=>`<button class="opt" onclick="pickOpt(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div>
+    <div id="explainBox"></div>
+    <div style="height:14px"></div>
+    <button class="btn" id="nextBtn" style="display:none" onclick="nextQuestion()">${state.idx===total-1?'Finish exam':'Next question →'}</button>
+  </div>`;
+}
+
+window.pickOpt = function(i){
+  if(state.picked!==null) return;
+  state.picked = i;
+  const q = QUESTIONS[state.idx];
+  const correct = i===q.c;
+  state.answers.push({i:state.idx, picked:i, correct});
+  document.querySelectorAll('#opts .opt').forEach((el,idx)=>{
+    if(idx===q.c) el.classList.add('correct');
+    else if(idx===i) el.classList.add('wrong');
+  });
+  document.getElementById('explainBox').innerHTML = `<div class="explain"><strong>${correct?'Correct.':'Not quite.'}</strong> ${q.e}</div>`;
+  document.getElementById('nextBtn').style.display='inline-block';
+};
+
+window.nextQuestion = function(){
+  state.idx++; state.picked=null; render();
+};
+
+async function finishExam(){
+  const total = QUESTIONS.length;
+  const correctCount = state.answers.filter(a=>a.correct).length;
+  const pct = Math.round((correctCount/total)*100);
+  const rec = {
+    pid: state.pid, name: state.name, email: state.email,
+    score: correctCount, total, pct, pass: pct>=PASS_PERCENT,
+    answers: state.answers, timeMs: Date.now()-state.startTime, ts: new Date().toISOString()
+  };
+  await saveResult(rec);
+  state.lastRec = rec; state.tab='result';
+  render();
+}
+
+function renderResult(){
+  const rec = state.lastRec;
+  if(!rec){
+    app.innerHTML = `${renderTabs('result')}<div class="card"><p>Complete the exam to see your result here.</p></div>`;
+    return;
+  }
+  const mistakes = rec.answers.filter(a=>!a.correct);
+  app.innerHTML = `
+  ${renderTabs('result')}
+  <div class="card">
+    <h2 style="margin-top:0">Your result</h2>
+    <div class="stat">
+      <div><div class="num">${rec.score}/${rec.total}</div><div class="lbl">Score</div></div>
+      <div><div class="num">${rec.pct}%</div><div class="lbl">Percentage</div></div>
+      <div><div class="num" style="color:${rec.pass?'var(--green)':'var(--red)'}">${rec.pass?'PASS':'FAIL'}</div><div class="lbl">Threshold ${PASS_PERCENT}%</div></div>
+    </div>
+    <p style="color:var(--muted);font-size:13px">This result is visible only to you (${rec.email}) and to the exam owner via the Admin tab.</p>
+    ${mistakes.length ? `<h3>Review your mistakes</h3>` + mistakes.map(m=>{
+      const q = QUESTIONS[m.i];
+      return `<div style="margin-bottom:14px;padding:12px;border:1px solid var(--line);border-radius:8px">
+        <div class="qi">Question ${m.i+1} · <span class="badge ${q.d}">${q.d}</span></div>
+        <div style="font-size:14px;margin:6px 0"><strong>${q.q}</strong></div>
+        <div style="font-size:13px;color:var(--red)">Your answer: ${q.o[m.picked]}</div>
+        <div style="font-size:13px;color:var(--green)">Correct answer: ${q.o[q.c]}</div>
+        <div class="explain">${q.e}</div>
+      </div>`;
+    }).join('') : `<p style="color:var(--green)">No mistakes — perfect score.</p>`}
+  </div>`;
+}
+
+async function renderLeaderboard(){
+  app.innerHTML = `${renderTabs('leaderboard')}<div class="card"><p style="color:var(--muted)">Loading leaderboard…</p></div>`;
+  const all = await loadAllResults();
+  all.sort((a,b)=> b.pct - a.pct || a.timeMs - b.timeMs);
+  const rows = all.map((r,i)=>`<tr class="${r.pid===state.pid?'me':''}"><td>${i+1}</td><td>${r.name}</td><td>${r.score}/${r.total}</td><td>${r.pct}%</td><td>${r.pass?'Pass':'Fail'}</td></tr>`).join('');
+  app.innerHTML = `
+  ${renderTabs('leaderboard')}
+  <div class="card">
+    <h2 style="margin-top:0">Leaderboard</h2>
+    <p style="color:var(--muted);font-size:13px">Only names and scores are shown here. Your row is highlighted.</p>
+    <table><thead><tr><th>#</th><th>Name</th><th>Score</th><th>%</th><th>Result</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="color:var(--muted)">No attempts yet.</td></tr>'}</tbody></table>
+  </div>`;
+}
+
+function renderAdmin(){
+  if(!state.adminOK){
+    app.innerHTML = `
+    ${renderTabs('admin')}
+    <div class="card">
+      <h2 style="margin-top:0">Admin access</h2>
+      <label>Passcode</label>
+      <input type="password" id="pw">
+      <div class="err" id="pwErr"></div>
+      <div style="height:14px"></div>
+      <button class="btn" onclick="checkAdmin()">Unlock</button>
+    </div>`;
+    return;
+  }
+  app.innerHTML = `${renderTabs('admin')}<div class="card"><p style="color:var(--muted)">Loading all participant results…</p></div>`;
+  loadAllResults().then(all=>{
+    all.sort((a,b)=> b.pct - a.pct || a.timeMs - b.timeMs);
+    const rows = all.map(r=>`<tr><td>${r.name}</td><td>${r.email}</td><td>${r.score}/${r.total}</td><td>${r.pct}%</td><td>${r.pass?'Pass':'Fail'}</td><td>${new Date(r.ts).toLocaleString()}</td></tr>`).join('');
+    app.innerHTML = `
+    ${renderTabs('admin')}
+    <div class="card">
+      <div class="row"><h2 style="margin-top:0">Admin dashboard</h2><button class="btn secondary" onclick="exportCSV()">Export CSV</button></div>
+      <p style="color:var(--muted);font-size:13px">${all.length} attempt(s) recorded for this exam.</p>
+      <table><thead><tr><th>Name</th><th>Email</th><th>Score</th><th>%</th><th>Result</th><th>Submitted</th></tr></thead><tbody>${rows || '<tr><td colspan="6" style="color:var(--muted)">No attempts yet.</td></tr>'}</tbody></table>
+    </div>`;
+    state._adminData = all;
+  });
+}
+
+window.checkAdmin = function(){
+  const v = document.getElementById('pw').value;
+  if(v===ADMIN_PASSCODE){ state.adminOK=true; render(); }
+  else document.getElementById('pwErr').textContent = 'Incorrect passcode.';
+};
+
+window.exportCSV = function(){
+  const all = state._adminData || [];
+  const qCols = QUESTIONS.map((q,i)=>`Q${i+1}`);
+  const header = ['Name','Email','Score','Percent','Result','SubmittedAt', ...qCols];
+  const lines = [header.join(',')];
+  all.forEach(r=>{
+    const answerMap = {}; r.answers.forEach(a=> answerMap[a.i]=a.correct?'1':'0');
+    const qvals = QUESTIONS.map((q,i)=> answerMap[i] ?? '');
+    const row = [r.name, r.email, r.score, r.pct, r.pass?'Pass':'Fail', r.ts, ...qvals].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+    lines.push(row.join(','));
+  });
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${EXAM_ID}_results.csv`;
+  a.click();
+};
+
+render();
+</script>
+<div class="foot">MCP Fundamentals Certification Exam · ${QUESTIONS.length} questions</div>
+</body>
+</html>

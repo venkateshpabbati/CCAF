@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Enterprise Labs — Schema Contracts &amp; Token Economics</title>
+<style>
+  :root{
+    --bg:#F7F8FA;
+    --panel:#FFFFFF;
+    --ink:#161B26;
+    --ink-soft:#4B5262;
+    --muted:#8A90A0;
+    --line:#E3E6EC;
+    --blue:#2F5FDE;
+    --blue-dim:#EAF0FE;
+    --green:#1E8E5A;
+    --green-dim:#E7F6EE;
+    --red:#C0392B;
+    --red-dim:#FCEBE9;
+    --amber:#B7791F;
+    --amber-dim:#FBF2E2;
+    --mono: 'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+    --disp: 'Space Grotesk', 'Inter', sans-serif;
+    --body: 'Inter', -apple-system, sans-serif;
+    --radius:10px;
+  }
+  @font-face{font-family:'Space Grotesk';src:local('Space Grotesk');}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--blue);}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{
+    max-width:1180px; margin:0 auto; padding:14px 24px;
+    display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--disp); font-weight:700; font-size:17px;
+    letter-spacing:-0.01em;
+  }
+  .brand .stamp{
+    width:28px;height:28px;border-radius:7px;
+    background:var(--ink); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono); font-size:12px; font-weight:700;
+  }
+  .lab-switch{ display:flex; gap:8px; margin-left:auto; }
+  .lab-switch button{
+    font-family:var(--body); font-weight:600; font-size:13.5px;
+    padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+    background:var(--panel); color:var(--ink-soft); cursor:pointer;
+    transition:all .15s ease;
+  }
+  .lab-switch button:hover{border-color:var(--blue);}
+  .lab-switch button.active{
+    background:var(--ink); color:#fff; border-color:var(--ink);
+  }
+
+  /* ---------- Layout ---------- */
+  .shell{ max-width:1180px; margin:0 auto; padding:28px 24px 80px; }
+  .lab-view{ display:none; }
+  .lab-view.active{ display:block; }
+
+  .lab-head{ margin-bottom:22px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:11.5px; text-transform:uppercase;
+    letter-spacing:.12em; color:var(--blue); font-weight:600;
+  }
+  h1.lab-title{
+    font-family:var(--disp); font-size:32px; margin:6px 0 8px;
+    letter-spacing:-0.02em; font-weight:700;
+  }
+  .lab-sub{ color:var(--ink-soft); font-size:15px; max-width:760px; }
+
+  /* ---------- Section pill nav ---------- */
+  .pill-nav{
+    display:flex; gap:6px; flex-wrap:wrap; margin:22px 0 24px;
+    border-bottom:1px solid var(--line); padding-bottom:16px;
+  }
+  .pill-nav button{
+    font-family:var(--mono); font-size:12.5px; font-weight:600;
+    padding:7px 13px; border-radius:7px; border:1px solid var(--line);
+    background:var(--panel); color:var(--ink-soft); cursor:pointer;
+    white-space:nowrap;
+  }
+  .pill-nav button:hover{ border-color:var(--blue); color:var(--blue); }
+  .pill-nav button.active{ background:var(--blue-dim); border-color:var(--blue); color:var(--blue); }
+
+  .section-view{ display:none; animation:fade .2s ease; }
+  .section-view.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(3px);} to{opacity:1; transform:translateY(0);} }
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px 24px; margin-bottom:16px;
+  }
+  .card h2{
+    font-family:var(--disp); font-size:19px; margin:0 0 10px; letter-spacing:-0.01em;
+  }
+  .card h3{
+    font-family:var(--disp); font-size:15px; margin:18px 0 8px; color:var(--ink);
+  }
+  .card p{ margin:0 0 10px; color:var(--ink-soft); font-size:14.5px; }
+  .card ul{ margin:0 0 10px; padding-left:20px; color:var(--ink-soft); font-size:14.5px; }
+  .card li{ margin-bottom:4px; }
+
+  /* ---------- Code blocks ---------- */
+  .code-wrap{ position:relative; margin:10px 0 16px; }
+  pre{
+    background:#12151F; color:#E7EAF3; font-family:var(--mono); font-size:12.6px;
+    padding:16px 44px 16px 16px; border-radius:8px; overflow-x:auto; margin:0;
+    line-height:1.6;
+  }
+  pre .tok-key{color:#7FB3FF;}
+  pre .tok-str{color:#9FE3A8;}
+  pre .tok-com{color:#7A8299;}
+  .copy-btn{
+    position:absolute; top:8px; right:8px;
+    background:#232A3A; color:#C9D0E0; border:1px solid #333B4E;
+    font-family:var(--mono); font-size:11px; padding:5px 9px; border-radius:6px;
+    cursor:pointer;
+  }
+  .copy-btn:hover{ background:#2D3549; }
+  .copy-btn.copied{ background:var(--green); color:#fff; border-color:var(--green); }
+
+  /* ---------- Flow diagram ---------- */
+  .flow{
+    display:flex; flex-direction:column; align-items:center; gap:0;
+    margin:16px 0; font-family:var(--mono); font-size:12.5px;
+  }
+  .flow-node{
+    background:var(--panel); border:1.5px solid var(--ink); border-radius:8px;
+    padding:9px 18px; color:var(--ink); font-weight:600; text-align:center;
+    min-width:220px;
+  }
+  .flow-node.accent{ border-color:var(--blue); color:var(--blue); background:var(--blue-dim); }
+  .flow-node.good{ border-color:var(--green); color:var(--green); background:var(--green-dim); }
+  .flow-node.bad{ border-color:var(--red); color:var(--red); background:var(--red-dim); }
+  .flow-arrow{ color:var(--muted); font-size:16px; line-height:1; margin:2px 0; }
+  .flow-branch{ display:flex; gap:36px; margin:2px 0; }
+  .flow-branch-col{ display:flex; flex-direction:column; align-items:center; }
+  .flow-label{ color:var(--muted); font-size:11px; margin-bottom:2px; }
+
+  /* ---------- Test case grid ---------- */
+  .tc-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:14px 0; }
+  .tc-card{
+    border:1px solid var(--line); border-radius:8px; padding:14px; background:#FBFCFE;
+  }
+  .tc-card .tc-num{
+    font-family:var(--mono); font-size:11px; color:#fff; background:var(--ink);
+    display:inline-block; padding:2px 8px; border-radius:5px; margin-bottom:8px;
+  }
+  .tc-card.good .tc-num{ background:var(--green); }
+  .tc-card.bad .tc-num{ background:var(--red); }
+  .tc-card .tc-title{ font-weight:700; font-size:13.5px; margin-bottom:6px; }
+  .tc-card .tc-input{
+    font-family:var(--mono); font-size:11.8px; color:var(--ink-soft);
+    background:#fff; border:1px solid var(--line); border-radius:6px; padding:8px; margin-bottom:8px;
+  }
+  .tc-card .tc-expect{ font-size:12.5px; color:var(--ink-soft); }
+  .tc-card .tc-expect b{ color:var(--ink); }
+
+  /* ---------- Checklist ---------- */
+  .checklist{ display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+  .checklist label{
+    display:flex; align-items:flex-start; gap:10px; font-size:14px; color:var(--ink-soft);
+    padding:9px 12px; border:1px solid var(--line); border-radius:8px; cursor:pointer;
+    background:#FBFCFE;
+  }
+  .checklist input{ margin-top:3px; accent-color:var(--blue); }
+  .checklist label.checked{ background:var(--green-dim); border-color:var(--green); color:var(--ink); }
+
+  /* ---------- Badge / stamp ---------- */
+  .badge{
+    display:inline-block; font-family:var(--mono); font-size:11px; font-weight:700;
+    padding:3px 9px; border-radius:5px; letter-spacing:.04em; text-transform:uppercase;
+  }
+  .badge.blue{ background:var(--blue-dim); color:var(--blue); }
+  .badge.green{ background:var(--green-dim); color:var(--green); }
+  .badge.red{ background:var(--red-dim); color:var(--red); }
+  .badge.amber{ background:var(--amber-dim); color:var(--amber); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0; }
+  th,td{ text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); }
+  th{ font-family:var(--mono); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  td{ color:var(--ink-soft); }
+  td b{ color:var(--ink); }
+
+  .warn-box{
+    border:1px solid var(--amber); background:var(--amber-dim); border-radius:8px;
+    padding:12px 14px; font-size:13.5px; color:#7A5711; margin:14px 0;
+  }
+  .info-box{
+    border:1px solid var(--blue); background:var(--blue-dim); border-radius:8px;
+    padding:12px 14px; font-size:13.5px; color:#1E3E9C; margin:14px 0;
+  }
+
+  /* ---------- Lab 2 mock UI ---------- */
+  .mock-app{
+    border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:#fff;
+  }
+  .mock-tabs{ display:flex; flex-wrap:wrap; border-bottom:1px solid var(--line); background:#FBFCFE; }
+  .mock-tabs button{
+    font-family:var(--mono); font-size:12px; font-weight:600; padding:11px 14px;
+    border:none; background:transparent; color:var(--ink-soft); cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .mock-tabs button.active{ color:var(--blue); border-bottom-color:var(--blue); background:var(--blue-dim); }
+  .mock-body{ padding:20px; }
+  .mock-view{ display:none; } .mock-view.active{ display:block; }
+  .field-label{ font-family:var(--mono); font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+  .field-box{
+    border:1px solid var(--line); border-radius:7px; padding:10px 12px; font-size:13.5px;
+    background:#FBFCFE; color:var(--ink-soft); margin-bottom:14px; min-height:20px;
+  }
+  .metric-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+  .metric{
+    border:1px solid var(--line); border-radius:8px; padding:12px; text-align:center; background:#FBFCFE;
+  }
+  .metric .num{ font-family:var(--disp); font-size:22px; font-weight:700; }
+  .metric .lbl{ font-family:var(--mono); font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
+  .run-btn{
+    font-family:var(--body); font-weight:600; font-size:13.5px; padding:10px 18px;
+    background:var(--ink); color:#fff; border:none; border-radius:7px; cursor:pointer; margin-top:4px;
+  }
+  .run-btn:hover{ background:var(--blue); }
+  .before-after{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:14px 0; }
+  .ba-col{ border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .ba-col.after{ border-color:var(--green); background:var(--green-dim); }
+  .ba-col h4{ margin:0 0 10px; font-family:var(--mono); font-size:12px; letter-spacing:.05em; }
+
+  .challenge-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin:14px 0; }
+  .challenge{
+    border:1px solid var(--line); border-radius:8px; padding:14px; background:#FBFCFE; position:relative;
+  }
+  .challenge .cnum{
+    font-family:var(--disp); font-size:24px; font-weight:700; color:var(--line); position:absolute; top:10px; right:14px;
+  }
+  .challenge h4{ margin:0 0 6px; font-size:14px; }
+  .challenge p{ margin:0; font-size:13px; color:var(--ink-soft); }
+
+  .score-table td.total{ font-weight:700; color:var(--ink); border-top:2px solid var(--ink); }
+
+  .footer-note{ text-align:center; color:var(--muted); font-size:12.5px; margin-top:36px; }
+
+  @media (max-width:720px){
+    .metric-row{ grid-template-columns:repeat(2,1fr); }
+    .before-after{ grid-template-columns:1fr; }
+    .flow-branch{ gap:16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="stamp">{}</span> Claude Enterprise Labs</div>
+    <div class="lab-switch">
+      <button class="active" data-lab="lab1">Lab 1 · Schema &amp; Retry Loop</button>
+      <button data-lab="lab2">Lab 2 · Token &amp; Cost Optimizer</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- ============================= LAB 1 ============================= -->
+  <div class="lab-view active" id="lab1">
+    <div class="lab-head">
+      <div class="eyebrow">Lab 01 — Enterprise AI Pattern</div>
+      <h1 class="lab-title">JSON Schema Tool Use &amp; Validation‑Retry Loop</h1>
+      <p class="lab-sub">Scenario: an Employee Expense Approval Agent. Claude converts natural‑language expense reports into structured JSON; your application enforces the contract, rejects bad output, and retries with feedback until the JSON is valid or the retry budget runs out.</p>
+    </div>
+
+    <div class="pill-nav" id="l1-nav"></div>
+    <div id="l1-sections"></div>
+  </div>
+
+  <!-- ============================= LAB 2 ============================= -->
+  <div class="lab-view" id="lab2">
+    <div class="lab-head">
+      <div class="eyebrow">Lab 02 — Cost Engineering</div>
+      <h1 class="lab-title">Token &amp; Cost Optimizer</h1>
+      <p class="lab-sub">A browser‑based workbench for measuring how prompt design and objective framing change token usage and cost. Learners enter their own API key locally — it is kept in memory only, never stored or exported.</p>
+    </div>
+
+    <div class="warn-box"><b>Key handling:</b> never commit or deploy a real API key in a public page. In this lab the key field is session‑memory only — no localStorage, no cookies, no export.</div>
+
+    <div class="pill-nav" id="l2-nav"></div>
+    <div id="l2-sections"></div>
+  </div>
+
+  <div class="footer-note">Internal enterprise training material · Claude Platform (API / Workbench) &amp; Claude.ai</div>
+</div>
+
+<script>
+/* ---------------- generic tab engine ---------------- */
+function wireTabs(navId, containerId, defs, onRender){
+  const nav = document.getElementById(navId);
+  const container = document.getElementById(containerId);
+  defs.forEach((d,i)=>{
+    const btn = document.createElement('button');
+    btn.textContent = d.label;
+    if(i===0) btn.classList.add('active');
+    btn.addEventListener('click', ()=>{
+      [...nav.children].forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      [...container.children].forEach(s=>s.classList.remove('active'));
+      document.getElementById(d.id).classList.add('active');
+    });
+    nav.appendChild(btn);
+
+    const sec = document.createElement('div');
+    sec.className = 'section-view' + (i===0 ? ' active':'');
+    sec.id = d.id;
+    sec.innerHTML = d.html;
+    container.appendChild(sec);
+  });
+  if(onRender) onRender();
+}
+
+/* lab switcher */
+document.querySelectorAll('.lab-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.lab-switch button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.lab-view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(btn.dataset.lab).classList.add('active');
+  });
+});
+
+function copyBtn(id){
+  return `<div class="code-wrap"><button class="copy-btn" onclick="doCopy('${id}',this)">Copy</button><pre id="${id}"></pre></div>`;
+}
+function doCopy(id, btn){
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig = btn.textContent; btn.textContent='Copied'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent=orig; btn.classList.remove('copied');},1200);
+  });
+}
+
+/* ================= LAB 1 CONTENT ================= */
+const l1defs = [
+{id:'l1-a', label:'A · Claude.ai Warm-Up', html:`
+  <div class="card">
+    <h2>Part A — Understand structured output on Claude.ai</h2>
+    <p>Paste the prompt below into Claude.ai and give it the employee input. The goal: observe that Claude <i>can</i> produce structured JSON from a prompt alone, but prompting is not the same as application‑level validation.</p>
+    <h3>Prompt</h3>
+    ${copyBtn('l1a-prompt')}
+    <h3>Employee input (clean case)</h3>
+    ${copyBtn('l1a-input1')}
+    <h3>Employee input (intentionally messy)</h3>
+    ${copyBtn('l1a-input2')}
+    <div class="info-box"><b>Discuss:</b> what breaks if the messy response goes straight into an enterprise database?</div>
+    <div class="tc-grid">
+      <div class="tc-card bad"><div class="tc-num">Risk</div><div class="tc-title">Amount as text</div><div class="tc-expect">"2500 rupees" instead of the number <b>2500</b>.</div></div>
+      <div class="tc-card bad"><div class="tc-num">Risk</div><div class="tc-title">Missing date</div><div class="tc-expect">No <b>expense_date</b> supplied by the employee.</div></div>
+      <div class="tc-card bad"><div class="tc-num">Risk</div><div class="tc-title">Missing currency</div><div class="tc-expect">Model may guess or omit <b>currency</b>.</div></div>
+      <div class="tc-card bad"><div class="tc-num">Risk</div><div class="tc-title">Inconsistent type</div><div class="tc-expect"><b>expense_type</b> may not match an allowed enum value.</div></div>
+      <div class="tc-card bad"><div class="tc-num">Risk</div><div class="tc-title">Boolean drift</div><div class="tc-expect">"yes" instead of the boolean <b>true</b>.</div></div>
+    </div>
+    <p>This is the case for schema validation as a hard gate before any downstream process runs.</p>
+  </div>
+`},
+{id:'l1-b', label:'B · The Contract', html:`
+  <div class="card">
+    <h2>Part B — Build the JSON Schema</h2>
+    <p>The schema is the contract between Claude's output and your business process. Nothing enters the approval pipeline unless it satisfies this contract.</p>
+    ${copyBtn('l1b-schema')}
+    <h3>The contract loop</h3>
+    <div class="flow">
+      <div class="flow-node accent">Claude generates JSON</div>
+      <div class="flow-arrow">▼</div>
+      <div class="flow-node">JSON Schema — VALID?</div>
+      <div class="flow-arrow">▼</div>
+      <div class="flow-branch">
+        <div class="flow-branch-col">
+          <div class="flow-label">yes</div>
+          <div class="flow-node good">Execute business process</div>
+        </div>
+        <div class="flow-branch-col">
+          <div class="flow-label">no</div>
+          <div class="flow-node bad">Validation error</div>
+          <div class="flow-arrow">▼</div>
+          <div class="flow-node">Send error to Claude</div>
+          <div class="flow-arrow">▼</div>
+          <div class="flow-node accent">Retry</div>
+        </div>
+      </div>
+    </div>
+  </div>
+`},
+{id:'l1-c', label:'C · Tool Definition', html:`
+  <div class="card">
+    <h2>Part C — Build the tool in Claude Platform</h2>
+    <p>Move to <a href="https://platform.claude.com" target="_blank">platform.claude.com</a> (Workbench or API). A tool definition has a name, a description, and an <span class="badge blue">input_schema</span>.</p>
+    ${copyBtn('l1c-tool')}
+    <h3>Submit for tool_use</h3>
+    ${copyBtn('l1c-input')}
+    <p>Inspect the generated <span class="badge blue">tool_use</span> block — this is the structured input Claude proposes to pass to <code>submit_expense</code>.</p>
+  </div>
+`},
+{id:'l1-d', label:'D · Force a Failure', html:`
+  <div class="card">
+    <h2>Part D — Introduce a validation failure</h2>
+    <p>Deliberately under‑specify the request:</p>
+    ${copyBtn('l1d-input')}
+    <h3>Learners should identify what's missing</h3>
+    <div class="tc-grid">
+      <div class="tc-card bad"><div class="tc-num">Missing</div><div class="tc-title">currency</div><div class="tc-expect">No currency mentioned in the input text.</div></div>
+      <div class="tc-card bad"><div class="tc-num">Missing</div><div class="tc-title">expense_date</div><div class="tc-expect">No date mentioned in the input text.</div></div>
+    </div>
+    <div class="info-box"><b>Key distinction:</b> Claude generates the data. Your application owns the validation. The client‑side tool‑use pattern expects your app to receive <span class="badge blue">tool_use</span>, run the corresponding logic, and return a <span class="badge blue">tool_result</span>.</div>
+  </div>
+`},
+{id:'l1-e', label:'E · Retry Loop', html:`
+  <div class="card">
+    <h2>Part E — The validation‑retry loop</h2>
+    <p>A minimal Python harness: validate Claude's JSON against the schema, and on failure, feed the error back for a bounded number of retries.</p>
+    ${copyBtn('l1e-code')}
+    <h3>Architecture, not the Python itself, is the lesson</h3>
+    <div class="flow">
+      <div class="flow-node">User input</div><div class="flow-arrow">▼</div>
+      <div class="flow-node accent">Claude</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Structured JSON</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">JSON Schema validator</div><div class="flow-arrow">▼</div>
+      <div class="flow-branch">
+        <div class="flow-branch-col"><div class="flow-label">valid</div><div class="flow-node good">Tool execution</div></div>
+        <div class="flow-branch-col">
+          <div class="flow-label">invalid</div>
+          <div class="flow-node bad">Error message</div><div class="flow-arrow">▼</div>
+          <div class="flow-node accent">Claude</div><div class="flow-arrow">▼</div>
+          <div class="flow-node">Retry</div>
+        </div>
+      </div>
+    </div>
+  </div>
+`},
+{id:'l1-f', label:'F · Break It', html:`
+  <div class="card">
+    <h2>Part F — Make the learners break it</h2>
+    <p>The most important part of the lab. Run each case through the validator and record the exact error.</p>
+    <div class="tc-grid">
+      <div class="tc-card good">
+        <div class="tc-num">Test 1 · Valid</div>
+        <div class="tc-title">Clean expense</div>
+        <div class="tc-input">Rahul spent INR 2450 on customer dinner on 25 August 2026. Receipt is available.</div>
+        <div class="tc-expect">Passes validation — all 7 fields present and correctly typed.</div>
+      </div>
+      <div class="tc-card bad">
+        <div class="tc-num">Test 2 · Wrong type</div>
+        <div class="tc-title">Amount as string</div>
+        <div class="tc-input">The amount was "2450 rupees".</div>
+        <div class="tc-expect"><b>amount</b> must be a number.</div>
+      </div>
+      <div class="tc-card bad">
+        <div class="tc-num">Test 3 · Invalid enum</div>
+        <div class="tc-title">Unrecognized category</div>
+        <div class="tc-input">Expense type is "Dinner".</div>
+        <div class="tc-expect"><b>expense_type</b> must be one of: Travel, Food, Hotel, Transport, Other.</div>
+      </div>
+      <div class="tc-card bad">
+        <div class="tc-num">Test 4 · Missing fields</div>
+        <div class="tc-title">Underspecified</div>
+        <div class="tc-input">Rahul spent INR 2450 on dinner.</div>
+        <div class="tc-expect">Missing: <b>expense_date</b>, <b>business_purpose</b>, <b>receipt_available</b>.</div>
+      </div>
+      <div class="tc-card bad">
+        <div class="tc-num">Test 5 · Extra field</div>
+        <div class="tc-title">Data‑governance breach</div>
+        <div class="tc-input">Response includes an unexpected <b>employee_password</b> field.</div>
+        <div class="tc-expect">Rejected — schema sets <b>additionalProperties: false</b>. Validation doubles as a governance control.</div>
+      </div>
+    </div>
+  </div>
+`},
+{id:'l1-g', label:'G · Advanced Challenge', html:`
+  <div class="card">
+    <h2>Part G — Bound the retry loop</h2>
+    <p>Extend the loop to a maximum of three attempts, then escalate to a human.</p>
+    <div class="flow">
+      <div class="flow-node">Attempt 1</div><div class="flow-arrow">▼</div>
+      <div class="flow-node bad">Invalid</div><div class="flow-arrow">▼</div>
+      <div class="flow-node accent">Claude correction</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Attempt 2</div><div class="flow-arrow">▼</div>
+      <div class="flow-node bad">Invalid</div><div class="flow-arrow">▼</div>
+      <div class="flow-node accent">Claude correction</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Attempt 3</div><div class="flow-arrow">▼</div>
+      <div class="flow-node good">Valid</div><div class="flow-arrow">▼</div>
+      <div class="flow-node good">Execute tool</div>
+    </div>
+    <h3>Escalation path</h3>
+    <div class="flow">
+      <div class="flow-node bad">retry_count &gt; 3</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Stop</div><div class="flow-arrow">▼</div>
+      <div class="flow-node amber" style="border-color:var(--amber);color:var(--amber);background:var(--amber-dim);">Send to human review</div>
+    </div>
+    <div class="warn-box">Production principle: never build an unlimited validation‑retry loop.</div>
+  </div>
+`},
+{id:'l1-h', label:'H · Enterprise Extension', html:`
+  <div class="card">
+    <h2>Part H — Apply the pattern to other teams</h2>
+    <p>Same schema → validate → retry → execute pattern, different domain object.</p>
+    <table>
+      <tr><th>Team</th><th>Lab scenario</th></tr>
+      <tr><td><b>HR</b></td><td>Resume screening JSON</td></tr>
+      <tr><td><b>Finance</b></td><td>Invoice extraction</td></tr>
+      <tr><td><b>Sales</b></td><td>CRM lead creation</td></tr>
+      <tr><td><b>IT</b></td><td>Incident creation</td></tr>
+      <tr><td><b>Procurement</b></td><td>Purchase request</td></tr>
+      <tr><td><b>Healthcare</b></td><td>Patient record extraction</td></tr>
+      <tr><td><b>QA</b></td><td>Test‑case generation</td></tr>
+      <tr><td><b>Operations</b></td><td>Incident ticket creation</td></tr>
+    </table>
+    <h3>Final learners challenge</h3>
+    <p>Build an AI‑powered purchase request processor: natural language → JSON → schema validation → error feedback → retry (max 3) → simulated <code>create_purchase_request</code> tool call.</p>
+    <div class="checklist" id="l1h-checklist">
+      <label><input type="checkbox"><span>JSON Schema defined</span></label>
+      <label><input type="checkbox"><span>Claude tool definition written</span></label>
+      <label><input type="checkbox"><span>Tool use invoked and inspected</span></label>
+      <label><input type="checkbox"><span>JSON validation implemented</span></label>
+      <label><input type="checkbox"><span>Validation error produced and read</span></label>
+      <label><input type="checkbox"><span>Retry loop implemented (max 3)</span></label>
+      <label><input type="checkbox"><span>Successful tool execution demonstrated</span></label>
+      <label><input type="checkbox"><span>Maximum‑retry handling / human escalation demonstrated</span></label>
+    </div>
+    <p>This is the core shift from prompt engineering to LLM application engineering: schema → validation → feedback → retry → tool execution.</p>
+  </div>
+`}
+];
+
+/* ================= LAB 2 CONTENT ================= */
+const l2defs = [
+{id:'l2-flow', label:'Overview', html:`
+  <div class="card">
+    <h2>Learner workflow</h2>
+    <div class="flow">
+      <div class="flow-node">Enter Claude API key</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Select model</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Enter objective</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Enter Prompt A</div><div class="flow-arrow">▼</div>
+      <div class="flow-node accent">Run Prompt A</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Input / Output tokens → Total cost</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Optimize prompt → Prompt B</div><div class="flow-arrow">▼</div>
+      <div class="flow-node accent">Run again</div><div class="flow-arrow">▼</div>
+      <div class="flow-node good">Token reduction % · Cost reduction %</div><div class="flow-arrow">▼</div>
+      <div class="flow-node">Change objective → repeat</div>
+    </div>
+    <div class="info-box">Recommended architecture for production: <b>Browser → your backend (holds the API key) → Claude API.</b> For a local classroom lab, the key is entered at runtime and held only in memory — never written to localStorage, cookies, source code, or exported results.</div>
+  </div>
+`},
+{id:'l2-tokencalc', label:'Token Calculator', html:`
+  <div class="card">
+    <h2>Token Calculator</h2>
+    <p>Estimate token count for a draft prompt before spending a real API call.</p>
+    <div class="mock-app"><div class="mock-body">
+      <div class="field-label">Draft text</div>
+      <div class="field-box">Analyze this customer data and create a detailed report including customer behavior, sales trends, product performance, recommendations, risks, opportunities, and future strategy.</div>
+      <button class="run-btn">Estimate tokens</button>
+      <div class="metric-row">
+        <div class="metric"><div class="num">~46</div><div class="lbl">Est. tokens</div></div>
+        <div class="metric"><div class="num">~185</div><div class="lbl">chars ÷ 4 (rough)</div></div>
+      </div>
+    </div></div>
+    <p>Rough estimate only — the <b>Prompt Experiment</b> tab returns actual usage from the Claude API response.</p>
+  </div>
+`},
+{id:'l2-costcalc', label:'Cost Calculator', html:`
+  <div class="card">
+    <h2>Cost Calculator</h2>
+    <p>Convert measured input/output tokens into an estimated dollar cost for the selected model.</p>
+    <table>
+      <tr><th>Field</th><th>Source</th></tr>
+      <tr><td>Input tokens</td><td>From API response <code>usage.input_tokens</code></td></tr>
+      <tr><td>Output tokens</td><td>From API response <code>usage.output_tokens</code></td></tr>
+      <tr><td>Rate per model</td><td>Published per‑model input/output pricing</td></tr>
+      <tr><td>Estimated cost</td><td>(input_tokens × input_rate) + (output_tokens × output_rate)</td></tr>
+    </table>
+    <div class="info-box">Pricing changes over time — always confirm current per‑model rates before presenting cost figures to stakeholders.</div>
+  </div>
+`},
+{id:'l2-experiment', label:'Prompt Experiment', html:`
+  <div class="card">
+    <h2>Prompt Experiment</h2>
+    <div class="mock-app">
+      <div class="mock-body">
+        <div class="field-label">Objective</div>
+        <div class="field-box">Create a detailed sales report.</div>
+        <div class="field-label">Prompt</div>
+        <div class="field-box">Analyze this customer data and create a detailed report including customer behavior, sales trends, product performance, recommendations, risks, opportunities, and future strategy.</div>
+        <div class="field-label">Model</div>
+        <div class="field-box">Claude model ▾</div>
+        <button class="run-btn">Run prompt</button>
+        <div class="metric-row">
+          <div class="metric"><div class="num">185</div><div class="lbl">Input tokens</div></div>
+          <div class="metric"><div class="num">620</div><div class="lbl">Output tokens</div></div>
+          <div class="metric"><div class="num">805</div><div class="lbl">Total tokens</div></div>
+          <div class="metric"><div class="num">$0.00xx</div><div class="lbl">Est. cost</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+`},
+{id:'l2-opt', label:'Optimization', html:`
+  <div class="card">
+    <h2>Optimization</h2>
+    <div class="mock-app"><div class="mock-body">
+      <div class="field-label">Original prompt</div>
+      <div class="field-box">Analyze this customer data and create a detailed report including customer behavior, sales trends, product performance, recommendations, risks, opportunities, and future strategy.</div>
+      <button class="run-btn">Analyze prompt</button>
+      <h3 style="margin-top:16px;">Problems found</h3>
+      <div class="checklist">
+        <label class="checked"><input type="checkbox" checked><span>Repetition</span></label>
+        <label class="checked"><input type="checkbox" checked><span>Unnecessary instructions</span></label>
+        <label class="checked"><input type="checkbox" checked><span>Excessive output requirement</span></label>
+        <label class="checked"><input type="checkbox" checked><span>Ambiguous objective</span></label>
+      </div>
+      <button class="run-btn">Optimize prompt</button>
+      <div class="field-label" style="margin-top:14px;">Optimized prompt</div>
+      <div class="field-box">Analyze the provided customer data. Return: (1) top 3 sales trends, (2) top 3 risks, (3) top 3 opportunities, (4) three recommended actions. Concise business language. Do not repeat source data. Limit to 300 words.</div>
+      <button class="run-btn">Run optimized prompt</button>
+      <div class="before-after">
+        <div class="ba-col"><h4>BEFORE</h4>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr;">
+            <div class="metric"><div class="num">245</div><div class="lbl">Input</div></div>
+            <div class="metric"><div class="num">512</div><div class="lbl">Output</div></div>
+          </div>
+        </div>
+        <div class="ba-col after"><h4>AFTER</h4>
+          <div class="metric-row" style="grid-template-columns:1fr 1fr;">
+            <div class="metric"><div class="num">180</div><div class="lbl">Input</div></div>
+            <div class="metric"><div class="num">290</div><div class="lbl">Output</div></div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <tr><td>Token reduction</td><td><span class="badge green">37.9%</span></td></tr>
+        <tr><td>Cost reduction</td><td><span class="badge green">37.9%</span></td></tr>
+      </table>
+    </div></div>
+  </div>
+`},
+{id:'l2-objexp', label:'Objective Experiment', html:`
+  <div class="card">
+    <h2>Objective‑Change Experiment</h2>
+    <p>Hold the source data constant; change only the objective. This isolates how framing — not phrasing — drives token spend.</p>
+    <div class="tc-grid">
+      <div class="tc-card"><div class="tc-num">Objective A</div><div class="tc-title">Detailed report</div><div class="tc-expect">Create a detailed executive report.</div></div>
+      <div class="tc-card"><div class="tc-num">Objective B</div><div class="tc-title">Sales risks only</div><div class="tc-expect">Identify only the three biggest sales risks.</div></div>
+      <div class="tc-card"><div class="tc-num">Objective C</div><div class="tc-title">Next‑week actions</div><div class="tc-expect">Generate three actions a sales manager should take next week.</div></div>
+    </div>
+    <table>
+      <tr><th>Objective</th><th>Input</th><th>Output</th><th>Total</th><th>Cost</th></tr>
+      <tr><td>Detailed report</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Sales risks</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Next‑week actions</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+    </table>
+    <div class="info-box">Takeaway: the objective determines output shape and volume, which drives token consumption and cost — independent of prompt wording.</div>
+  </div>
+`},
+{id:'l2-challenges', label:'Lab Challenges', html:`
+  <div class="card">
+    <h2>Lab Challenges</h2>
+    <div class="challenge-grid">
+      <div class="challenge"><span class="cnum">1</span><h4>Prompt compression</h4><p>Cut prompt tokens by at least 20% without changing the objective.</p></div>
+      <div class="challenge"><span class="cnum">2</span><h4>Output control</h4><p>Cut output tokens by at least 30% while preserving key information.</p></div>
+      <div class="challenge"><span class="cnum">3</span><h4>Objective change</h4><p>Rewrite "detailed report" as "executive decision summary".</p></div>
+      <div class="challenge"><span class="cnum">4</span><h4>Cost optimization</h4><p>Cut total estimated cost by at least 40%.</p></div>
+      <div class="challenge"><span class="cnum">5</span><h4>Context optimization</h4><p>Remove irrelevant information while holding answer quality.</p></div>
+      <div class="challenge"><span class="cnum">6</span><h4>Best prompt</h4><p>Find the lowest‑token prompt that still produces an acceptable answer.</p></div>
+    </div>
+  </div>
+`},
+{id:'l2-results', label:'Results', html:`
+  <div class="card">
+    <h2>Token Optimization Score</h2>
+    <table class="score-table">
+      <tr><th>Criterion</th><th>Points</th></tr>
+      <tr><td>Prompt quality</td><td>20</td></tr>
+      <tr><td>Token reduction</td><td>25</td></tr>
+      <tr><td>Cost reduction</td><td>25</td></tr>
+      <tr><td>Objective clarity</td><td>15</td></tr>
+      <tr><td>Output quality</td><td>15</td></tr>
+      <tr><td class="total">Total</td><td class="total">100</td></tr>
+    </table>
+    <h3>Export</h3>
+    <p>Results export to CSV locally (learner name, objective, prompt version, input/output/total tokens, cost, reduction %). No data leaves the browser except the direct API calls to Claude.</p>
+    <button class="run-btn">Export results as CSV</button>
+  </div>
+`}
+];
+
+wireTabs('l1-nav','l1-sections', l1defs, ()=>{
+  document.getElementById('l1a-prompt').innerHTML =
+`You are an expense processing assistant.
+
+Convert the following employee expense into JSON.
+
+The JSON must contain:
+employee_name
+expense_type
+amount
+currency
+expense_date
+business_purpose
+receipt_available
+
+Rules:
+- amount must be a positive number
+- currency must be INR, USD, EUR, or GBP
+- receipt_available must be true or false
+- expense_type must be Travel, Food, Hotel, Transport, or Other`;
+
+  document.getElementById('l1a-input1').innerHTML =
+`Employee input:
+
+"Rahul spent 2450 rupees on dinner with a customer on
+25 August 2026. The receipt is available. This was for
+a customer meeting."`;
+
+  document.getElementById('l1a-input2').innerHTML =
+`"Rahul spent two thousand five hundred rupees on dinner
+with a customer. Receipt is available."`;
+
+  document.getElementById('l1b-schema').innerHTML =
+`{
+  "type": "object",
+  "properties": {
+    "employee_name": { "type": "string" },
+    "expense_type": {
+      "type": "string",
+      "enum": ["Travel", "Food", "Hotel", "Transport", "Other"]
+    },
+    "amount": { "type": "number", "minimum": 0 },
+    "currency": {
+      "type": "string",
+      "enum": ["INR", "USD", "EUR", "GBP"]
+    },
+    "expense_date": { "type": "string" },
+    "business_purpose": { "type": "string" },
+    "receipt_available": { "type": "boolean" }
+  },
+  "required": [
+    "employee_name", "expense_type", "amount", "currency",
+    "expense_date", "business_purpose", "receipt_available"
+  ],
+  "additionalProperties": false
+}`;
+
+  document.getElementById('l1c-tool').innerHTML =
+`{
+  "name": "submit_expense",
+  "description": "Submit a validated employee expense for approval.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "employee_name": { "type": "string" },
+      "expense_type": {
+        "type": "string",
+        "enum": ["Travel", "Food", "Hotel", "Transport", "Other"]
+      },
+      "amount": { "type": "number", "minimum": 0 },
+      "currency": {
+        "type": "string",
+        "enum": ["INR", "USD", "EUR", "GBP"]
+      },
+      "expense_date": { "type": "string" },
+      "business_purpose": { "type": "string" },
+      "receipt_available": { "type": "boolean" }
+    },
+    "required": [
+      "employee_name", "expense_type", "amount", "currency",
+      "expense_date", "business_purpose", "receipt_available"
+    ],
+    "additionalProperties": false
+  }
+}`;
+
+  document.getElementById('l1c-input').innerHTML =
+`Process this expense:
+
+"Rahul spent ₹2450 on dinner with a customer on
+25 August 2026. The receipt is available.
+The purpose was a customer meeting."`;
+
+  document.getElementById('l1d-input').innerHTML =
+`Process this expense:
+
+"Rahul spent 2450 on dinner with a customer.
+Receipt is available."`;
+
+  document.getElementById('l1e-code').innerHTML =
+`import json
+from jsonschema import validate, ValidationError
+
+MAX_RETRIES = 3
+
+expense_schema = {
+    "type": "object",
+    "properties": {
+        "employee_name": {"type": "string"},
+        "expense_type": {
+            "type": "string",
+            "enum": ["Travel", "Food", "Hotel", "Transport", "Other"]
+        },
+        "amount": {"type": "number", "minimum": 0},
+        "currency": {
+            "type": "string",
+            "enum": ["INR", "USD", "EUR", "GBP"]
+        },
+        "expense_date": {"type": "string"},
+        "business_purpose": {"type": "string"},
+        "receipt_available": {"type": "boolean"}
+    },
+    "required": [
+        "employee_name", "expense_type", "amount", "currency",
+        "expense_date", "business_purpose", "receipt_available"
+    ],
+    "additionalProperties": False
+}
+
+def validate_expense(expense):
+    try:
+        validate(instance=expense, schema=expense_schema)
+        return True, None
+    except ValidationError as error:
+        return False, error.message
+
+attempt = 1
+while attempt <= MAX_RETRIES:
+    print(f"Validation attempt: {attempt}")
+    claude_output = input("Paste Claude JSON: ")
+    try:
+        expense = json.loads(claude_output)
+        valid, error = validate_expense(expense)
+        if valid:
+            print("VALID JSON — expense approved for processing.")
+            break
+        else:
+            print("VALIDATION FAILED:", error)
+            print("Send back to Claude:")
+            print(f"Your previous JSON failed validation: {error}. "
+                  "Correct the JSON and return only valid JSON.")
+    except json.JSONDecodeError:
+        print("INVALID JSON FORMAT — ask Claude to return valid JSON only.")
+    attempt += 1
+
+if attempt > MAX_RETRIES:
+    print("Maximum retry limit reached.")`;
+
+  /* checklist interactivity */
+  document.querySelectorAll('.checklist input').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      cb.closest('label').classList.toggle('checked', cb.checked);
+    });
+  });
+});
+
+wireTabs('l2-nav','l2-sections', l2defs, ()=>{
+  document.querySelectorAll('.checklist input').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      cb.closest('label').classList.toggle('checked', cb.checked);
+    });
+  });
+});
+</script>
+</body>
+</html>
